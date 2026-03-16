@@ -1,0 +1,12 @@
+branchName: ralph/feature
+userStories:
+  - id: US-001
+    title: Add login form
+    acceptanceCriteria:
+      - This is example task, you can define granular requirement here
+      - Email/password fields
+      - Validates email format
+      - typecheck passes
+    priority: 1
+    passes: false
+    notes: ""

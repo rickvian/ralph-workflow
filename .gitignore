@@ -1,0 +1,40 @@
+# debug files
+personalnotes/
+/scripts/
+/bin/experimentaldebugscripts/
+.devcontainer
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build
+dist/
+build/
+.next/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project
+roadmap.md
+docs/tsconfig.tsbuildinfo
+
+docs/next-env.d.ts

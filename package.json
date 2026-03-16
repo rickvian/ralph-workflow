@@ -1,0 +1,32 @@
+{
+  "name": "ralph-workflow",
+  "version": "1.0.3",
+  "description": "scripts to get you started using Ralph workflow",
+  "keywords": [
+    "ralph"
+  ],
+  "homepage": "https://github.com/rickvian/ralph-workflow#readme",
+  "bugs": {
+    "url": "https://github.com/rickvian/ralph-workflow/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rickvian/ralph-workflow.git"
+  },
+  "license": "MIT",
+  "author": "Rickvian",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "ralph-workflow": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "templates",
+    "public"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs:build": "cd docs && npm run build"
+  }
+}
