@@ -1,3 +1,7 @@
+About Ralph
+Ralph is simple loop that prompt coding agent until it finishes work
+https://ghuntley.com/ralph/
+
 This ralph setup is based on https://x.com/ryancarson/status/2008548371712135632
 
 This is guide for human and AI agent should ignore this file.

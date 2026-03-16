@@ -1,4 +1,4 @@
-🔄 Ralph is an autonomous AI coding agent loop based on the workflow by [@ryancarson](https://x.com/ryancarson/status/2008548371712135632).
+🔄 Ralph is an autonomous AI coding agent loop based on https://ghuntley.com/ralph/
 
 Ralph workflow scaffolds everything you need to run Ralph safely inside a VS Code Dev Container with isolated GitHub credentials.
 
