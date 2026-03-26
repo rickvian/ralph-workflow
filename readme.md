@@ -1,8 +1,7 @@
 Ralph workflow provides fastest way to scaffolds isolated ralph project.
 Provides everything you need to run Ralph safely inside a VS Code Dev Container with isolated GitHub credentials.
 
-
-📖 **Full usage guide:** https://rickvian.github.io/ralph-workflow/usage-guide
+[Read the documentation](https://rickvian.github.io/ralph-workflow).
 
 ----
 
@@ -36,6 +35,11 @@ Running the CLI will:
 2. **Optionally create a scoped GitHub PAT** — walks you through generating a fine-grained token restricted to just this repository, so Ralph can only push to one repo.
 3. **Scaffold Ralph scripts** into `scripts/ralph/` — the loop script, prompt template, task list, and progress log.
 
+## Get Involved
+We welcome issues and pull requests!
+- Participate in [GitHub discussions](https://github.com/rickvian/ralph-workflow/discussions)
+- Chat with the community on Discord
+- See CONTRIBUTING.md for setup instructions
 
 ---
 
