@@ -18,7 +18,7 @@
   "type": "module",
   "main": "index.js",
   "bin": {
-    "ralph-workflow": "./bin/cli.js"
+    "ralph-workflow": "bin/cli.js"
   },
   "files": [
     "bin",
