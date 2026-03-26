@@ -10,7 +10,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { VALIDATE_ISOLATION_SCRIPT } from '../scripts/validate-isolation.sh.js';
 import { CHECK_ISOLATION_SCRIPT } from '../scripts/check-isolation.sh.js';
 
 /**
@@ -116,10 +115,6 @@ export function writeDevContainer(config, templateName, setupGitHub = false, tok
  * @param {object} finalConfig - Mutated in place to add postAttachCommand.
  */
 function _writeDebugScripts(devcontainerDir, finalConfig) {
-  const validationScript = path.join(devcontainerDir, 'validate-isolation.sh');
-  fs.writeFileSync(validationScript, VALIDATE_ISOLATION_SCRIPT);
-  fs.chmodSync(validationScript, '0755');
-
   const checkScript = path.join(devcontainerDir, 'check-container-isolation.sh');
   fs.writeFileSync(checkScript, CHECK_ISOLATION_SCRIPT);
   fs.chmodSync(checkScript, '0755');
