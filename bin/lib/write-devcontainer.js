@@ -4,13 +4,10 @@
  * Always applies credential-isolation settings (blanks out VS Code git
  * forwarding env vars and disables git auth helpers). When GitHub setup is
  * requested, also mounts the scoped PAT token and configures `gh auth`.
- * When debug mode is enabled, injects isolation-check shell scripts that
- * run automatically on container attach.
  */
 
 import fs from 'fs';
 import path from 'path';
-import { CHECK_ISOLATION_SCRIPT } from '../scripts/check-isolation.sh.js';
 
 /**
  * VS Code settings that prevent the host's git credentials from being
@@ -46,9 +43,8 @@ const ISOLATION_ENV = {
  * @param {string}  templateName  - Human-readable template name for log output.
  * @param {boolean} setupGitHub   - Whether to mount a PAT token and configure gh CLI.
  * @param {string|null} tokenPath - Absolute path to the stored PAT token file.
- * @param {boolean} debug         - If true, inject isolation-check scripts.
  */
-export function writeDevContainer(config, templateName, setupGitHub = false, tokenPath = null, debug = false) {
+export function writeDevContainer(config, templateName, setupGitHub = false, tokenPath = null) {
   const devcontainerDir = path.resolve(process.cwd(), '.devcontainer');
   const devcontainerFile = path.join(devcontainerDir, 'devcontainer.json');
 
@@ -99,37 +95,15 @@ export function writeDevContainer(config, templateName, setupGitHub = false, tok
     finalConfig.postCreateCommand = finalConfig.postCreateCommand || '';
   }
 
-  if (debug) {
-    _writeDebugScripts(devcontainerDir, finalConfig);
-  }
-
   fs.writeFileSync(devcontainerFile, JSON.stringify(finalConfig, null, 2));
 
-  _printSummary(templateName, setupGitHub, debug);
+  _printSummary(templateName, setupGitHub);
 }
 
-/**
- * Write isolation-check shell scripts into the devcontainer directory and
- * register `postAttachCommand` to run them once per container lifetime.
- * @param {string} devcontainerDir
- * @param {object} finalConfig - Mutated in place to add postAttachCommand.
- */
-function _writeDebugScripts(devcontainerDir, finalConfig) {
-  const checkScript = path.join(devcontainerDir, 'check-container-isolation.sh');
-  fs.writeFileSync(checkScript, CHECK_ISOLATION_SCRIPT);
-  fs.chmodSync(checkScript, '0755');
-
-  finalConfig.postAttachCommand =
-    '([ -f ~/.ralph-isolation-checked ] || (bash .devcontainer/check-container-isolation.sh; touch ~/.ralph-isolation-checked))';
-}
-
-/** @param {string} templateName @param {boolean} setupGitHub @param {boolean} debug */
-function _printSummary(templateName, setupGitHub, debug) {
+/** @param {string} templateName @param {boolean} setupGitHub */
+function _printSummary(templateName, setupGitHub) {
   console.log(`\nDev Container configured with "${templateName}" template.`);
   console.log('   Created: .devcontainer/devcontainer.json');
-  if (debug) {
-    console.log('   Debug mode: check-container-isolation.sh injected (runs on container attach)');
-  }
   console.log('   Isolation enabled: Git credentials are NOT forwarded from host.');
   if (setupGitHub) {
     console.log('   GitHub PAT token will be isolated to this repository only.');
