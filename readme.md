@@ -1,6 +1,7 @@
-🔄 Ralph is an autonomous AI coding agent loop based on https://ghuntley.com/ralph/
+Ralph workflow provides fastest way to scaffolds isolated ralph project.
+Provides everything you need to run Ralph safely inside a VS Code Dev Container with isolated GitHub credentials.
 
-Ralph workflow scaffolds everything you need to run Ralph safely inside a VS Code Dev Container with isolated GitHub credentials.
+🔄 Ralph is an autonomous AI coding agent loop based on https://ghuntley.com/ralph/
 
 This is really suitable for exploratory projects —
 provide it with directions and requirements, leave it AFK, and it develops for you.
