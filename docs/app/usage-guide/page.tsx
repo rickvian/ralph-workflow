@@ -252,6 +252,62 @@ claude --dangerously-skip-permissions      # accept the warning once`}</CodeBloc
 
 
 
+      {/* pnpm in Dev Containers */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-semibold mb-3 text-brand-purple">Using pnpm in Dev Containers</h2>
+        <p className="text-gray-400 text-sm mb-3">
+          If your project uses <strong className="text-gray-200">pnpm</strong>, you'll hit a common friction point:
+          every time the container is rebuilt, pnpm re-downloads and reinstalls all packages from scratch.
+          Dev Containers are ephemeral — the container filesystem is discarded on rebuild, so nothing in
+          <code className="bg-white/10 text-brand-purple px-1 mx-1 rounded">node_modules</code> or the pnpm store persists between rebuilds unless you explicitly mount a volume.
+        </p>
+
+        <h3 className="text-lg font-medium mb-2 text-gray-200">Option 1 — Named Docker Volume <span className="text-gray-500 text-sm font-normal">(easiest)</span></h3>
+        <p className="text-gray-400 text-sm mb-2">
+          Mount a named volume for both the pnpm store and <code className="bg-white/10 text-brand-purple px-1 rounded">node_modules</code>.
+          Docker manages the volume lifecycle; it survives rebuilds automatically.
+        </p>
+        <CodeBlock lang="yaml">{`# Inside .devcontainer/devcontainer.json
+"mounts": [
+  "source=project-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume",
+  "source=project-node-modules,target=\${containerWorkspaceFolder}/node_modules,type=volume"
+],
+"postCreateCommand": "pnpm install"`}</CodeBlock>
+
+        <h3 className="text-lg font-medium mb-2 text-gray-200">Option 2 — Bind Mount Your Host's pnpm Store</h3>
+        <p className="text-gray-400 text-sm mb-2">
+          Reuse the pnpm store that already lives on your host machine. This means packages already cached
+          on the host are available immediately inside the container — no re-download needed.
+        </p>
+        <CodeBlock lang="yaml">{`# Inside .devcontainer/devcontainer.json
+"mounts": [
+  "source=\${localEnv:HOME}/.local/share/pnpm/store,target=/home/node/.pnpm-store,type=bind,consistency=cached"
+],
+"postCreateCommand": "pnpm config set store-dir /home/node/.pnpm-store && pnpm install"`}</CodeBlock>
+
+        <h3 className="text-lg font-medium mb-2 mt-4 text-gray-200">Key Considerations</h3>
+        <ul className="list-disc pl-5 space-y-2 text-gray-400 text-sm">
+          <li>
+            <strong className="text-gray-200">Hard link limitations</strong> — pnpm normally saves disk space by hard-linking packages from its store into{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">node_modules</code>.
+            Hard links only work within the same filesystem. When the pnpm store and{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">node_modules</code> are on different mounts inside the container,
+            pnpm falls back to copying files instead. To avoid this, keep both on the same mount point.
+          </li>
+          <li>
+            <strong className="text-gray-200">Permissions</strong> — if you bind-mount a host directory, the container user (usually{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">node</code> or{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">vscode</code>) must own it.
+            Add a <code className="bg-white/10 text-brand-purple px-1 rounded">postCreateCommand</code> to fix ownership if needed:
+            <CodeBlock lang="bash">{`sudo chown -R node:node /home/node/.pnpm-store`}</CodeBlock>
+          </li>
+          <li>
+            <strong className="text-gray-200">Named volume vs bind mount</strong> — named volumes are simpler and require no host-side setup, but you lose
+            visibility into the store contents. Bind mounts give you full access from the host but require the host path to exist and have correct permissions.
+          </li>
+        </ul>
+      </section>
+
       {/* Tips */}
       <section className="mb-10">
         <h2 className="text-2xl font-semibold mb-3 text-brand-purple">Tips</h2>

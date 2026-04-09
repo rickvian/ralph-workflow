@@ -48,7 +48,7 @@ async function main() {
     rl.close();
     scaffoldRalph(cliName);
   } else {
-    await setupDevContainer(DEBUG);
+    await setupDevContainer(DEBUG, cliName);
     // Note: rl was already closed inside selectMenu
     scaffoldRalph(cliName);
   }

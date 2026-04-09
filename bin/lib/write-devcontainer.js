@@ -43,8 +43,9 @@ const ISOLATION_ENV = {
  * @param {string}  templateName  - Human-readable template name for log output.
  * @param {boolean} setupGitHub   - Whether to mount a PAT token and configure gh CLI.
  * @param {string|null} tokenPath - Absolute path to the stored PAT token file.
+ * @param {string}      cliName   - The AI CLI selected by the user (e.g. 'claude').
  */
-export function writeDevContainer(config, templateName, setupGitHub = false, tokenPath = null) {
+export function writeDevContainer(config, templateName, setupGitHub = false, tokenPath = null, _debug = false, cliName = 'claude') {
   const devcontainerDir = path.resolve(process.cwd(), '.devcontainer');
   const devcontainerFile = path.join(devcontainerDir, 'devcontainer.json');
 
@@ -69,6 +70,14 @@ export function writeDevContainer(config, templateName, setupGitHub = false, tok
       ...ISOLATION_ENV,
     },
   };
+
+  if (cliName === 'claude') {
+    // this help persist claude configuration e.g agents installations
+    finalConfig.mounts = [
+      ...(finalConfig.mounts || []),
+      { source: 'claude-agents-vol', target: '/home/vscode/.claude', type: 'volume' },
+    ];
+  }
 
   if (setupGitHub && tokenPath) {
     finalConfig.features = {

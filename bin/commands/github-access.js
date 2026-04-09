@@ -20,7 +20,7 @@ import { writeDevContainer } from '../lib/write-devcontainer.js';
  * @param {string}  templateName - Human-readable template name.
  * @param {boolean} debug        - Whether to inject isolation-check scripts.
  */
-export async function setupGitHubAccess(config, templateName, debug = false) {
+export async function setupGitHubAccess(config, templateName, debug = false, cliName = 'claude') {
   const projectName = path.basename(process.cwd());
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q) => new Promise(resolve => rl.question(q, resolve));
@@ -41,7 +41,7 @@ export async function setupGitHubAccess(config, templateName, debug = false) {
 
   const tokenPath = _storeToken(token, projectName);
 
-  writeDevContainer(config, templateName, true, tokenPath, debug);
+  writeDevContainer(config, templateName, true, tokenPath, debug, cliName);
 }
 
 /** Initialise a git repo in cwd if one does not already exist. */

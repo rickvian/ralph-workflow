@@ -18,7 +18,7 @@ export const TEMPLATES = [
     label: 'Node              - Node.js projects',
     config: {
       name: 'Node.js',
-      image: 'mcr.microsoft.com/devcontainers/javascript-node:18',
+      image: 'mcr.microsoft.com/devcontainers/javascript-node:24',
       postCreateCommand: claudeInstall,
       remoteEnv,
       customizations: { vscode: { extensions: ['dbaeumer.vscode-eslint'] } },
