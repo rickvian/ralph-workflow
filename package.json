@@ -26,7 +26,11 @@
     "public"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
     "docs:build": "cd docs && npm run build"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.4"
   }
 }

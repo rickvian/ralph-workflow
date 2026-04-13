@@ -44,6 +44,9 @@ export function scaffoldRalph(cliName = 'claude') {
     const ralphShPath = path.join(targetScriptsDir, 'ralph', 'ralph.sh');
     writeRalphSh(ralphShPath, cliName);
 
+    // Make ralph.sh executable
+    fs.chmodSync(ralphShPath, 0o755);
+
     console.log("'scripts' directory has been created");
     console.log('\nYou can now use the Ralph scripts in your workflow.');
     console.log('Read scripts/ralph/ralph-usage-guide.md for more info.');
