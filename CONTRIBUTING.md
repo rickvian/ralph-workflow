@@ -53,4 +53,4 @@ Open an issue with:
 
 ---
 
-Need help? Check [Discussions](https://github.com/rickvian/ralph-workflow/discussions) or [CONTRIBUTORS.md](CONTRIBUTORS.md) to see who's been involved.
+Need help? Check [Discussions](https://github.com/rickvian/ralph-workflow/discussions), chat with the community on Discord, or see [CONTRIBUTORS.md](CONTRIBUTORS.md) to see who's been involved.
