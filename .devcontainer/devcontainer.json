@@ -1,6 +1,9 @@
 {
   "name": "Node.js",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
   "postCreateCommand": "npm install -g @anthropic-ai/claude-code",
   "remoteEnv": {
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
@@ -19,7 +22,8 @@
     }
   },
   "mounts": [
-    "source=gh-config,target=/root/.config/gh,type=volume"
+    "source=gh-config,target=/root/.config/gh,type=volume",
+    "source=claude-config,target=/root/.claude,type=volume"
   ],
   "containerEnv": {
     "SSH_AUTH_SOCK": "",
