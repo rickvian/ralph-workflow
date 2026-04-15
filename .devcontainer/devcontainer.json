@@ -1,0 +1,35 @@
+{
+  "name": "Node.js",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code",
+  "remoteEnv": {
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint"
+      ],
+      "settings": {
+        "git.terminalAuthentication": false,
+        "github.gitAuthentication": false,
+        "dev.containers.copyGitConfig": false,
+        "dev.containers.gitCredentialHelperConfigLocation": "none"
+      }
+    }
+  },
+  "mounts": [
+    "source=gh-config,target=/root/.config/gh,type=volume"
+  ],
+  "containerEnv": {
+    "SSH_AUTH_SOCK": "",
+    "GIT_ASKPASS": "",
+    "VSCODE_GIT_ASKPASS_NODE": "",
+    "VSCODE_GIT_ASKPASS_MAIN": "",
+    "VSCODE_GIT_IPC_HANDLE": "",
+    "GITHUB_TOKEN": "",
+    "GH_TOKEN": "",
+    "GCM_INTERACTIVE": "never",
+    "GIT_TERMINAL_PROMPT": "0"
+  }
+}
