@@ -1,17 +1,18 @@
 {
   "name": "Node.js",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:24",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "postCreateCommand": "npm install -g @anthropic-ai/claude-code",
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code && git config --global --unset-all credential.helper || true",
   "remoteEnv": {
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
   },
   "customizations": {
     "vscode": {
       "extensions": [
-        "dbaeumer.vscode-eslint"
+        "dbaeumer.vscode-eslint",
+        "mhutchie.git-graph"
       ],
       "settings": {
         "git.terminalAuthentication": false,
@@ -22,8 +23,22 @@
     }
   },
   "mounts": [
-    "source=gh-config,target=/root/.config/gh,type=volume",
-    "source=claude-config,target=/root/.claude,type=volume"
+    {
+      "source": "gh-config-ralph-workflow",
+      "target": "/root/.config/gh",
+      "type": "volume"
+    },
+    {
+      "source": "claude-agents-vol-ralph-workflow",
+      "target": "/root/.claude",
+      "type": "volume"
+    },
+    {
+      "source": "${localWorkspaceFolder}/.ralph/token",
+      "target": "/tmp/ralph_token",
+      "type": "bind",
+      "readonly": true
+    }
   ],
   "containerEnv": {
     "SSH_AUTH_SOCK": "",
@@ -35,5 +50,6 @@
     "GH_TOKEN": "",
     "GCM_INTERACTIVE": "never",
     "GIT_TERMINAL_PROMPT": "0"
-  }
+  },
+  "postStartCommand": "unset VSCODE_GIT_IPC_HANDLE GIT_ASKPASS VSCODE_GIT_ASKPASS_NODE VSCODE_GIT_ASKPASS_MAIN && git config --global --unset-all credential.helper || true && gh auth login --with-token < /tmp/ralph_token && gh auth setup-git"
 }

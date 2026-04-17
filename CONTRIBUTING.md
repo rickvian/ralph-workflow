@@ -10,10 +10,18 @@ cd ralph-workflow
 npm install
 ```
 
-Create a branch for your work:
+Create a branch for your work, including the issue number:
 ```bash
-git checkout -b feature/your-feature-name
+git checkout -b fix/13-short-description   # bug fix for issue #13
+git checkout -b feat/7-short-description   # feature for issue #7
 ```
+
+Branch naming pattern: `<type>/<issue-number>-<short-description>`
+- `fix/` — bug fixes
+- `feat/` — new features
+- `chore/` — maintenance, docs, tooling
+
+This embeds the issue number in the branch so both humans and AI agents can find the full context with `gh issue view <number>` without needing to search.
 
 ## Development
 

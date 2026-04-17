@@ -37,21 +37,38 @@ const ISOLATION_ENV = {
 };
 
 /**
+ * Derive a Docker-safe slug from the current project directory name.
+ * Used to scope named volumes per project so multiple ralph projects
+ * can coexist without overwriting each other's gh / claude state.
+ *
+ * @returns {string} e.g. "my-project"
+ */
+function _projectSlug() {
+  return path.basename(process.cwd())
+    .toLowerCase()
+    .replace(/^\.+/, '')            // strip leading dots
+    .replace(/[^a-z0-9]+/g, '-')   // non-alphanumeric runs → single dash
+    .replace(/^-+|-+$/g, '');      // trim edge dashes
+}
+
+/**
  * Build and write `.devcontainer/devcontainer.json`.
  *
  * @param {object}  config        - Base devcontainer config from a template.
  * @param {string}  templateName  - Human-readable template name for log output.
  * @param {boolean} setupGitHub   - Whether to mount a PAT token and configure gh CLI.
- * @param {string|null} tokenPath - Absolute path to the stored PAT token file.
+ * @param {string|null} _tokenPath - Unused; kept for backward compatibility.
  * @param {string}      cliName   - The AI CLI selected by the user (e.g. 'claude').
  */
-export function writeDevContainer(config, templateName, setupGitHub = false, tokenPath = null, _debug = false, cliName = 'claude') {
+export function writeDevContainer(config, templateName, setupGitHub = false, _tokenPath = null, _debug = false, cliName = 'claude') {
   const devcontainerDir = path.resolve(process.cwd(), '.devcontainer');
   const devcontainerFile = path.join(devcontainerDir, 'devcontainer.json');
 
   if (!fs.existsSync(devcontainerDir)) {
     fs.mkdirSync(devcontainerDir, { recursive: true });
   }
+
+  const slug = _projectSlug();
 
   const finalConfig = {
     ...config,
@@ -72,22 +89,27 @@ export function writeDevContainer(config, templateName, setupGitHub = false, tok
   };
 
   if (cliName === 'claude') {
-    // this help persist claude configuration e.g agents installations
+    // Persist claude configuration (e.g. agent installations) in a project-scoped
+    // volume so switching between ralph projects doesn't clobber each other's state.
     finalConfig.mounts = [
       ...(finalConfig.mounts || []),
-      { source: 'claude-agents-vol', target: '/home/vscode/.claude', type: 'volume' },
+      { source: `claude-agents-vol-${slug}`, target: '/home/vscode/.claude', type: 'volume' },
     ];
   }
 
-  if (setupGitHub && tokenPath) {
+  if (setupGitHub) {
     finalConfig.features = {
       ...finalConfig.features,
       'ghcr.io/devcontainers/features/github-cli:1': {},
     };
 
+    // Use ${localWorkspaceFolder} so the token path is resolved by the devcontainer
+    // runtime — works on macOS, Linux, and Windows without any OS-specific logic.
+    // The project-scoped volume name prevents cross-project gh auth collisions.
     finalConfig.mounts = [
       ...(finalConfig.mounts || []),
-      { source: tokenPath, target: '/tmp/ralph_token', type: 'bind' },
+      { source: `gh-config-${slug}`, target: '/home/vscode/.config/gh', type: 'volume' },
+      { source: '${localWorkspaceFolder}/.ralph/token', target: '/tmp/ralph_token', type: 'bind', readonly: true },
     ];
 
     const existingCommand = finalConfig.postCreateCommand || '';

@@ -4,8 +4,11 @@
  * - Initialises a git repo in the current directory if one doesn't exist.
  * - Creates a private GitHub repo via the gh CLI.
  * - Walks the user through creating a fine-grained PAT scoped only to this repo.
- * - Stores the token at ~/.config/ralph/<project>/token (mode 0600).
- * - Passes the token path to writeDevContainer so it is bind-mounted at runtime.
+ * - Stores the token at .ralph/token inside the project directory (mode 0600).
+ *   Using a project-local path means the devcontainer bind mount can reference
+ *   ${localWorkspaceFolder}/.ralph/token — no OS-specific absolute path needed,
+ *   so the same devcontainer.json works on macOS, Linux, and Windows.
+ * - Adds .ralph/ to .gitignore so the token is never committed.
  */
 
 import fs from 'fs';
@@ -39,9 +42,9 @@ export async function setupGitHubAccess(config, templateName, debug = false, cli
   const token = await _promptForPAT(ask, projectName, userName);
   rl.close();
 
-  const tokenPath = _storeToken(token, projectName);
+  _storeToken(token);
 
-  writeDevContainer(config, templateName, true, tokenPath, debug, cliName);
+  writeDevContainer(config, templateName, true, null, debug, cliName);
 }
 
 /** Initialise a git repo in cwd if one does not already exist. */
@@ -125,22 +128,40 @@ async function _promptForPAT(ask, projectName, userName) {
 }
 
 /**
- * Write the PAT to disk with restricted permissions.
+ * Write the PAT to .ralph/token inside the project directory with restricted
+ * permissions, and ensure .ralph/ is listed in .gitignore.
+ *
+ * Storing the token relative to the project (rather than in ~/.config/ralph/)
+ * lets devcontainer.json reference ${localWorkspaceFolder}/.ralph/token, which
+ * the devcontainer runtime resolves correctly on macOS, Linux, and Windows.
+ *
  * @param {string} token
- * @param {string} projectName
- * @returns {string} Absolute path to the stored token file.
  */
-function _storeToken(token, projectName) {
-  const tokenPath = path.join(process.env.HOME, '.config', 'ralph', projectName, 'token');
-  const tokenDir = path.dirname(tokenPath);
+function _storeToken(token) {
+  const tokenDir = path.join(process.cwd(), '.ralph');
+  const tokenPath = path.join(tokenDir, 'token');
 
   if (!fs.existsSync(tokenDir)) {
     fs.mkdirSync(tokenDir, { recursive: true });
   }
 
-  fs.writeFileSync(tokenPath, token);
-  fs.chmodSync(tokenPath, '0600');
+  fs.writeFileSync(tokenPath, token, { mode: 0o600 });
+
+  _ensureGitignore('.ralph/');
 
   console.log(`Token stored: ${tokenPath}`);
-  return tokenPath;
+}
+
+/**
+ * Append an entry to .gitignore if it is not already present.
+ * @param {string} entry
+ */
+function _ensureGitignore(entry) {
+  const gitignorePath = path.join(process.cwd(), '.gitignore');
+  const existing = fs.existsSync(gitignorePath) ? fs.readFileSync(gitignorePath, 'utf8') : '';
+  const lines = existing.split('\n').map(l => l.trim());
+  if (!lines.includes(entry.trim())) {
+    const separator = existing.length > 0 && !existing.endsWith('\n') ? '\n' : '';
+    fs.appendFileSync(gitignorePath, `${separator}${entry}\n`);
+  }
 }
