@@ -230,6 +230,21 @@ export default function HowItWorksPage() {
           </span>
         </div>
 
+        <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm max-w-3xl mb-3">
+          <span className="text-brand-purple font-bold flex-shrink-0">Multi-project isolation</span>
+          <span className="text-gray-400">
+            Each project gets its own Docker volumes —{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">gh-config-&lt;project&gt;</code> and{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">claude-agents-vol-&lt;project&gt;</code>.
+            Switching between ralph projects never overwrites another project{"'"}s gh or Claude auth state.
+            The PAT is stored in{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">.ralph/token</code> inside the project
+            directory and mounted via{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">${'{localWorkspaceFolder}'}/.ralph/token</code>,
+            so the same <code className="bg-white/10 text-brand-purple px-1 rounded">devcontainer.json</code> works on macOS, Linux, and Windows.
+          </span>
+        </div>
+
       </section>
 
       {/* Step-by-step */}

@@ -96,7 +96,7 @@ export default function Home() {
 
 ✓ .devcontainer/devcontainer.json written
 ✓ scripts/ralph/ scaffolded
-✓ PAT stored at ~/.ralph-pat
+✓ PAT stored at .ralph/token (gitignored, mode 0600)
 
 Reopen this folder in the Dev Container to start.`}</code>
           </pre>
