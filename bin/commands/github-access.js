@@ -32,7 +32,7 @@ export async function setupGitHubAccess(config, templateName, debug = false, cli
 
   _ensureGitRepo();
 
-  const userName = _getGitHubUsername();
+  const userName = await _getGitHubUsername(ask);
 
   console.log('Note: a private GitHub repository will be created automatically using the gh CLI.');
   await _createGitHubRepo(projectName, userName, ask);
@@ -57,15 +57,24 @@ function _ensureGitRepo() {
 
 /**
  * Resolve the authenticated GitHub username via the gh CLI.
- * Exits with an error if gh is not authenticated.
- * @returns {string}
+ * Retries on failure until the user succeeds or declines.
+ * @param {function} ask
+ * @returns {Promise<string>}
  */
-function _getGitHubUsername() {
-  try {
-    return execSync('gh api user -q .login', { encoding: 'utf8' }).trim();
-  } catch {
-    console.error('Error: gh CLI not authenticated. Please run: gh auth login');
-    process.exit(1);
+async function _getGitHubUsername(ask) {
+  while (true) {
+    try {
+      return execSync('gh api user -q .login', { encoding: 'utf8', stdio: 'pipe' }).trim();
+    } catch (err) {
+      const stderr = (err.stderr || '').toString().trim();
+      console.error(`\nFailed to reach GitHub: ${stderr || 'unknown error'}`);
+      console.error('Ensure gh is authenticated (gh auth login) and you have internet access.');
+      const answer = await ask('Would you like to retry? (y/n): ');
+      if (answer.trim().toLowerCase() !== 'y') {
+        console.error('\nCannot continue without GitHub access. Run `gh auth login` and try again.');
+        process.exit(1);
+      }
+    }
   }
 }
 
