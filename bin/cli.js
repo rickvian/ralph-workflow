@@ -92,12 +92,12 @@ async function main() {
 
   if (!wantsIsolation) {
     console.log('\n  ⚠️  Proceeding without isolation. Be careful.\n');
+    await scaffoldRalph(cliName);
     rl.close();
-    scaffoldRalph(cliName);
   } else {
     await setupDevContainer(DEBUG, cliName);
     // Note: rl was already closed inside selectMenu
-    scaffoldRalph(cliName);
+    await scaffoldRalph(cliName);
   }
 }
 
