@@ -11,14 +11,16 @@
  *   1. Print the current package version.
  *   2. Ask which AI coding CLI to use.
  *   3. Ask whether to set up a VS Code Dev Container for isolation.
- *   4a. Yes → pick a container template → optionally set up a scoped GitHub PAT.
- *   4b. No  → confirm the user understands the risk, then proceed directly.
- *   5. Copy Ralph template files and generate ralph.sh for the chosen CLI.
+ *   4. Ask whether to set up a scoped GitHub PAT (independent of step 3).
+ *   5. If isolation: pick a container template (closes readline).
+ *   6. Execute the chosen combination, then scaffold Ralph files.
  */
 
 import { createRequire } from 'module';
 import { rl, ask } from './lib/ui.js';
-import { setupDevContainer } from './commands/devcontainer.js';
+import { selectTemplate } from './commands/devcontainer.js';
+import { setupGitHubAccess } from './commands/github-access.js';
+import { writeDevContainer } from './lib/write-devcontainer.js';
 import { scaffoldRalph } from './commands/scaffold.js';
 import CLI_MAP from './lib/cli-map.js';
 
@@ -90,15 +92,29 @@ async function main() {
   const isolateAnswer = await ask('Set up VS Code Dev Container for isolation? [Y/n]: ');
   const wantsIsolation = isolateAnswer.trim().toLowerCase() !== 'n';
 
-  if (!wantsIsolation) {
-    console.log('\n  ⚠️  Proceeding without isolation. Be careful.\n');
-    await scaffoldRalph(cliName);
-    rl.close();
+  const githubAnswer = await ask('Set up GitHub repository with isolated PAT token? [Y/n]: ');
+  const wantsGitHub = githubAnswer.trim().toLowerCase() !== 'n';
+
+  // Template selection uses raw keypress mode and closes rl — must come after all ask() calls.
+  let template = null;
+  if (wantsIsolation) {
+    template = await selectTemplate();
   } else {
-    await setupDevContainer(DEBUG, cliName);
-    // Note: rl was already closed inside selectMenu
-    await scaffoldRalph(cliName);
+    rl.close();
   }
+
+  if (!wantsIsolation && !wantsGitHub) {
+    console.log('\n  ⚠️  Proceeding without isolation. Be careful.\n');
+  } else if (wantsGitHub) {
+    await setupGitHubAccess();
+    if (wantsIsolation) {
+      writeDevContainer(template.config, template.name, true, null, DEBUG, cliName);
+    }
+  } else {
+    writeDevContainer(template.config, template.name, false, null, DEBUG, cliName);
+  }
+
+  await scaffoldRalph(cliName);
 }
 
 main();

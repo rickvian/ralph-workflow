@@ -15,15 +15,12 @@ import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 import { execSync } from 'child_process';
-import { writeDevContainer } from '../lib/write-devcontainer.js';
 
 /**
- * Full GitHub isolation setup flow.
- * @param {object}  config       - Base devcontainer config from the selected template.
- * @param {string}  templateName - Human-readable template name.
- * @param {boolean} debug        - Whether to inject isolation-check scripts.
+ * Git repository, GitHub repo creation, and PAT token setup flow.
+ * Devcontainer writing is handled by the caller.
  */
-export async function setupGitHubAccess(config, templateName, debug = false, cliName = 'claude') {
+export async function setupGitHubAccess() {
   const projectName = path.basename(process.cwd());
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q) => new Promise(resolve => rl.question(q, resolve));
@@ -41,8 +38,6 @@ export async function setupGitHubAccess(config, templateName, debug = false, cli
   rl.close();
 
   _storeToken(token);
-
-  writeDevContainer(config, templateName, true, null, debug, cliName);
 }
 
 /** Initialise a git repo in cwd if one does not already exist. */
