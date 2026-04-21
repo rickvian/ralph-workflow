@@ -10,6 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { ask } from '../lib/ui.js';
 import { writeRalphSh } from '../lib/generate-ralph-sh.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,8 +24,20 @@ const SOURCE_DIR = path.resolve(__dirname, '../../templates/scripts');
  * then generate ralph.sh for the chosen CLI.
  * @param {string} [cliName='claude'] - CLI key from cli-map.js
  */
-export function scaffoldRalph(cliName = 'claude') {
+export async function scaffoldRalph(cliName = 'claude') {
   const targetScriptsDir = path.resolve(process.cwd(), 'scripts');
+  const targetRalphDir = path.join(targetScriptsDir, 'ralph');
+
+  const existingDirs = [targetScriptsDir, targetRalphDir].filter(d => fs.existsSync(d));
+  if (existingDirs.length > 0) {
+    console.warn('\nWarning: the following director' + (existingDirs.length > 1 ? 'ies' : 'y') + ' already exist and will be overwritten:');
+    existingDirs.forEach(d => console.warn('  ' + d));
+    const answer = await ask('\nProceed and overwrite? [y/N]: ');
+    if (answer.trim().toLowerCase() !== 'y') {
+      console.log('Scaffold cancelled. No files were changed.');
+      return;
+    }
+  }
 
   console.log('Scaffolding scripts directory...');
 
@@ -34,9 +47,13 @@ export function scaffoldRalph(cliName = 'claude') {
   }
 
   try {
-    if (fs.cpSync) {
-      fs.cpSync(SOURCE_DIR, targetScriptsDir, { recursive: true });
-    } else {
+    try {
+      if (fs.cpSync) {
+        fs.cpSync(SOURCE_DIR, targetScriptsDir, { recursive: true });
+      } else {
+        _copyRecursive(SOURCE_DIR, targetScriptsDir);
+      }
+    } catch {
       _copyRecursive(SOURCE_DIR, targetScriptsDir);
     }
 
