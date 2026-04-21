@@ -28,16 +28,14 @@ export async function setupGitHubAccess(config, templateName, debug = false, cli
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q) => new Promise(resolve => rl.question(q, resolve));
 
-  /** // FIXME: if failed, give option for user to retry
-   give notes that github creation is using specific script to create **/
   console.log(`\nSetting up GitHub isolation for project: ${projectName}`);
-  
 
   _ensureGitRepo();
 
   const userName = _getGitHubUsername();
 
-  _createGitHubRepo(projectName, userName);
+  console.log('Note: a private GitHub repository will be created automatically using the gh CLI.');
+  await _createGitHubRepo(projectName, userName, ask);
 
   const token = await _promptForPAT(ask, projectName, userName);
   rl.close();
@@ -73,18 +71,36 @@ function _getGitHubUsername() {
 
 /**
  * Create a private GitHub repo for the current project and ensure a remote is set.
- * @param {string} projectName
- * @param {string} userName
+ * Retries on failure until the user succeeds or declines.
+ * @param {string}   projectName
+ * @param {string}   userName
+ * @param {function} ask
  */
-function _createGitHubRepo(projectName, userName) {
+async function _createGitHubRepo(projectName, userName, ask) {
   console.log('Creating private GitHub repository...');
-  try {
-    execSync(
-      `gh repo create "${projectName}" --private --source=. --push 2>/dev/null || gh repo create "${projectName}" --private`,
-      { stdio: 'inherit' }
-    );
-  } catch {
-    console.error('Warning: Could not create repo. It may already exist.');
+  while (true) {
+    try {
+      execSync(
+        `gh repo create "${projectName}" --private --source=. --push`,
+        { stdio: 'pipe' }
+      );
+      break;
+    } catch (err) {
+      const stderr = (err.stderr || '').toString();
+      if (stderr.toLowerCase().includes('already exists')) {
+        console.log('Repository already exists, continuing...');
+        break;
+      }
+      console.error(`\nFailed to create GitHub repository: ${stderr.trim() || 'unknown error'}`);
+      const answer = await ask('Would you like to retry? (y/n): ');
+      if (answer.trim().toLowerCase() !== 'y') {
+        console.error('\nCannot continue without a GitHub repository. Before re-running, check:');
+        console.error('  • gh auth status  — ensure you are authenticated');
+        console.error('  • The repository name is not already taken under a different account');
+        console.error('  • You have permission to create repositories on this account');
+        process.exit(1);
+      }
+    }
   }
 
   try {
