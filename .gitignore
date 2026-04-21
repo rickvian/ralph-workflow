@@ -2,8 +2,6 @@
 personalnotes/
 /scripts/
 /bin/experimentaldebugscripts/
-.devcontainer
-
 # Dependencies
 node_modules/
 
@@ -35,6 +33,10 @@ Thumbs.db
 
 # Project
 roadmap.md
+.ralph/
 docs/tsconfig.tsbuildinfo
 
 docs/next-env.d.ts
+core
+
+.claude/settings.local.json

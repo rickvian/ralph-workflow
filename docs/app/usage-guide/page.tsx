@@ -149,10 +149,25 @@ npx ralph-workflow`}</CodeBlock>
           <li>The wizard creates a GitHub repo using your current local git credential (you can retry or skip if it fails).</li>
           <li>The shell provides a GitHub link to create a PAT with the recommended minimum permissions pre-filled in the URL parameters.</li>
           <li>Open the link, manually select the repository you want Ralph to access, and generate the token.</li>
-          <li>Paste the token back into the shell — it will be stored on your host and mounted into the Dev Container.</li>
+          <li>
+            Paste the token back into the shell — it is written to{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">.ralph/token</code> inside your project
+            directory (mode 0600) and <code className="bg-white/10 text-brand-purple px-1 rounded">.ralph/</code> is
+            added to <code className="bg-white/10 text-brand-purple px-1 rounded">.gitignore</code> automatically so
+            the token is never committed.
+          </li>
         </ol>
         <p className="text-gray-400 text-sm mt-3">
           This gives Ralph access to only that one repo with granular permissions, reducing blast radius if something goes wrong.
+        </p>
+        <p className="text-gray-400 text-sm mt-2">
+          The token is mounted into the container via{' '}
+          <code className="bg-white/10 text-brand-purple px-1 rounded">${'{localWorkspaceFolder}'}/.ralph/token</code>,
+          a devcontainer variable that resolves correctly on macOS, Linux, and Windows —
+          no OS-specific paths are baked into your{' '}
+          <code className="bg-white/10 text-brand-purple px-1 rounded">devcontainer.json</code>.
+          Each project also gets its own isolated Docker volume for gh and Claude config, so switching
+          between multiple ralph projects never overwrites each other's auth state.
         </p>
       </section>
 
