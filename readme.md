@@ -41,6 +41,12 @@ We welcome issues and pull requests!
 - Chat with the community on Discord
 - See CONTRIBUTING.md for setup instructions
 
+## Contributors
+
+<a href="https://github.com/rickvian/ralph-workflow/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=rickvian/ralph-workflow" />
+</a>
+
 ---
 
 _Honestly, we all need to learn from Ralph. It may be clueless, but it is very persistent._
