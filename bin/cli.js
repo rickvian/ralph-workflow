@@ -95,6 +95,18 @@ async function main() {
   const githubAnswer = await ask('Set up GitHub repository with isolated PAT token? [Y/n]: ');
   const wantsGitHub = githubAnswer.trim().toLowerCase() !== 'n';
 
+  // Caveman and the awesome-subagents list are Claude-specific — skip their
+  // prompts for other CLIs so the flow stays short.
+  let wantsCaveman = false;
+  let wantsSubagents = false;
+  if (cliName === 'claude') {
+    const cavemanAnswer = await ask('Install Caveman debugging plugin? [y/N]: ');
+    wantsCaveman = cavemanAnswer.trim().toLowerCase() === 'y';
+
+    const subagentsAnswer = await ask('Install curated awesome-claude-code-subagents collection? [y/N]: ');
+    wantsSubagents = subagentsAnswer.trim().toLowerCase() === 'y';
+  }
+
   // Template selection uses raw keypress mode and closes rl — must come after all ask() calls.
   let template = null;
   if (wantsIsolation) {
@@ -103,15 +115,17 @@ async function main() {
     rl.close();
   }
 
+  const tools = { caveman: wantsCaveman, subagents: wantsSubagents };
+
   if (!wantsIsolation && !wantsGitHub) {
     console.log('\n  ⚠️  Proceeding without isolation. Be careful.\n');
   } else if (wantsGitHub) {
     await setupGitHubAccess();
     if (wantsIsolation) {
-      writeDevContainer(template.config, template.name, true, null, DEBUG, cliName);
+      writeDevContainer(template.config, template.name, true, null, DEBUG, cliName, tools);
     }
   } else {
-    writeDevContainer(template.config, template.name, false, null, DEBUG, cliName);
+    writeDevContainer(template.config, template.name, false, null, DEBUG, cliName, tools);
   }
 
   await scaffoldRalph(cliName);
