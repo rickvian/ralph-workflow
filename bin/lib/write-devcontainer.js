@@ -113,6 +113,7 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     finalConfig.mounts = [
       ...(finalConfig.mounts || []),
       { source: `gh-config-${slug}`, target: '/home/vscode/.config/gh', type: 'volume' },
+      { source: '${localWorkspaceFolder}/.ralph/token', target: '/tmp/ralph_token', type: 'bind', readonly: true },
     ];
 
     const existingCommand = finalConfig.postCreateCommand || '';
@@ -124,7 +125,7 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     finalConfig.postStartCommand =
       'unset VSCODE_GIT_IPC_HANDLE GIT_ASKPASS VSCODE_GIT_ASKPASS_NODE VSCODE_GIT_ASKPASS_MAIN' +
       ' && git config --global --unset-all credential.helper || true' +
-      ' && gh auth login --with-token < ${containerWorkspaceFolder}/.ralph/token && gh auth setup-git';
+      ' && gh auth login --with-token < /tmp/ralph_token && gh auth setup-git';
   } else {
     finalConfig.postCreateCommand = finalConfig.postCreateCommand || '';
   }
