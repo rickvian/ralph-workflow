@@ -38,3 +38,5 @@ docs/tsconfig.tsbuildinfo
 
 docs/next-env.d.ts
 core
+
+.claude/settings.local.json
