@@ -9,12 +9,12 @@ const features = [
   {
     title: 'Dev Container Templates',
     description:
-      'Leveraging VSCode Dev container to provide isolation for ralph loop. scaffold template pre-configures isolation, dependency, scripts to start coding immediately.',
+      'Leveraging VSCode Dev container to provide isolation for ralph loop. Scaffolded templates pre-configure isolation, dependencies, and auto-install RTK with rtk init already run for your chosen CLI so token-reduction kicks in on first boot. For Claude, opt in to the Caveman debug plugin and the awesome-claude-code-subagents collection.',
   },
   {
     title: 'Credential Isolation',
     description:
-      'ralph-workflow provides convenience to passing github PAT token if ralph needs it, perform credential cleaning within container programmatically',
+      'ralph-workflow provides convenience to passing github PAT token if ralph needs it, perform credential cleaning within container programmatically. GitHub setup is now independent from the Dev Container — pick either, both, or neither.',
   },
   {
     title: 'Ralph Task Loop',
@@ -87,14 +87,18 @@ export default function Home() {
           <pre className="bg-black/40 border border-white/10 text-green-400 rounded-lg p-6 overflow-x-auto text-sm leading-relaxed">
             <code>{`$ npx ralph-workflow
 
+? Which AI coding CLI? (claude/codex/gemini/opencode) claude
 ? Set up VS Code Dev Container for isolation? (Y/n) Y
-? Choose a Dev Container template: Node 20
 ? Set up GitHub repository with isolated PAT? (Y/n) Y
+? Install Caveman debugging plugin? (y/N) n
+? Install curated awesome-claude-code-subagents collection? (y/N) n
+? Choose a Dev Container template: Node 20
   → Open https://github.com/settings/personal-access-tokens/new
   → Select only this repository, grant Contents: write
 ? Paste your PAT: **********************************
 
 ✓ .devcontainer/devcontainer.json written
+✓ RTK + rtk init queued in postCreateCommand
 ✓ scripts/ralph/ scaffolded
 ✓ PAT stored at .ralph/token (gitignored, mode 0600)
 
