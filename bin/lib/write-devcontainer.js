@@ -159,7 +159,6 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     finalConfig.mounts = [
       ...(finalConfig.mounts || []),
       { source: `gh-config-${slug}`, target: '/home/vscode/.config/gh', type: 'volume' },
-      { source: '${localWorkspaceFolder}/.ralph/token', target: '/tmp/ralph_token', type: 'bind', readonly: true },
     ];
       { source: '${localWorkspaceFolder}/.ralph/token', target: '/tmp/ralph_token', type: 'bind', readonly: true },
     ];
