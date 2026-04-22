@@ -96,7 +96,16 @@ function _projectSlug() {
  * @param {object}  [tools]          - Optional tool opt-ins.
  * @param {boolean} [tools.caveman]  - Install the Caveman debugging plugin.
  * @param {boolean} [tools.subagents] - Clone the awesome-claude-code-subagents list.
+ * @param {object}  config           - Base devcontainer config from a template.
+ * @param {string}  templateName     - Human-readable template name for log output.
+ * @param {boolean} setupGitHub      - Whether to mount a PAT token and configure gh CLI.
+ * @param {string|null} _tokenPath   - Unused; kept for backward compatibility.
+ * @param {string}  cliName          - The AI CLI selected by the user (e.g. 'claude').
+ * @param {object}  [tools]          - Optional tool opt-ins.
+ * @param {boolean} [tools.caveman]  - Install the Caveman debugging plugin.
+ * @param {boolean} [tools.subagents] - Clone the awesome-claude-code-subagents list.
  */
+export function writeDevContainer(config, templateName, setupGitHub = false, _tokenPath = null, _debug = false, cliName = 'claude', tools = {}) {
 export function writeDevContainer(config, templateName, setupGitHub = false, _tokenPath = null, _debug = false, cliName = 'claude', tools = {}) {
   const devcontainerDir = path.resolve(process.cwd(), '.devcontainer');
   const devcontainerFile = path.join(devcontainerDir, 'devcontainer.json');
@@ -152,11 +161,25 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
       { source: `gh-config-${slug}`, target: '/home/vscode/.config/gh', type: 'volume' },
       { source: '${localWorkspaceFolder}/.ralph/token', target: '/tmp/ralph_token', type: 'bind', readonly: true },
     ];
+      { source: '${localWorkspaceFolder}/.ralph/token', target: '/tmp/ralph_token', type: 'bind', readonly: true },
+    ];
 
     finalConfig.postStartCommand =
       'unset VSCODE_GIT_IPC_HANDLE GIT_ASKPASS VSCODE_GIT_ASKPASS_NODE VSCODE_GIT_ASKPASS_MAIN' +
       ' && git config --global --unset-all credential.helper || true' +
       ' && gh auth login --with-token < ${containerWorkspaceFolder}/.ralph/token && gh auth setup-git';
+  }
+
+  const additions = [
+    RTK_INSTALL,
+    RTK_INIT_BY_CLI[cliName] ?? RTK_INIT_BY_CLI.claude,
+  ];
+  if (tools.caveman && cliName === 'claude') additions.push(CAVEMAN_INSTALL_CLAUDE);
+  if (tools.subagents && cliName === 'claude') additions.push(SUBAGENTS_CLONE);
+  if (useGitHub) additions.push('git config --global --unset-all credential.helper || true');
+
+  const existingCommand = finalConfig.postCreateCommand || '';
+  finalConfig.postCreateCommand = [existingCommand, ...additions].filter(Boolean).join(' && ');
   }
 
   const additions = [
