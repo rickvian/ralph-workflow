@@ -27,19 +27,21 @@ const RTK_INIT_BY_CLI = {
 };
 
 /**
- * Caveman install command (Claude Code only). The plugin marketplace
- * install works without claude auth at container-create time.
+ * Caveman install command (Claude Code only). Guarded so the plugin
+ * marketplace registration and install are skipped when the `.claude`
+ * volume already contains the plugin from a prior build.
  */
 const CAVEMAN_INSTALL_CLAUDE =
-  'claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman';
+  '[ -d /home/vscode/.claude/plugins/caveman ] || (claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman)';
 
 /**
  * Shallow-clones the VoltAgent awesome-claude-code-subagents list into
- * the project-scoped `.claude/agents` volume. Claude Code discovers
- * agents there automatically.
+ * the project-scoped `.claude/agents` volume. Guarded so a second
+ * container build doesn't re-clone into an already-populated directory
+ * and break the `&&` chain.
  */
 const SUBAGENTS_CLONE =
-  'mkdir -p /home/vscode/.claude/agents && git clone --depth=1 https://github.com/VoltAgent/awesome-claude-code-subagents /home/vscode/.claude/agents/awesome-subagents';
+  '[ -d /home/vscode/.claude/agents/awesome-subagents ] || (mkdir -p /home/vscode/.claude/agents && git clone --depth=1 https://github.com/VoltAgent/awesome-claude-code-subagents /home/vscode/.claude/agents/awesome-subagents)';
 
 /**
  * VS Code settings that prevent the host's git credentials from being
