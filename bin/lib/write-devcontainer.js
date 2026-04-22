@@ -13,7 +13,8 @@ import path from 'path';
  * RTK install script (universal Linux/macOS). Idempotent — re-running
  * upgrades RTK in place.
  */
-const RTK_INSTALL = 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh';
+// Pinned to v0.37.2 (80a6fe606f73b19e52b0b330d242e62a6c07be42) to prevent supply-chain risk from a mutable branch ref.
+const RTK_INSTALL = 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/80a6fe606f73b19e52b0b330d242e62a6c07be42/install.sh | sh';
 
 /**
  * Per-CLI `rtk init` invocation. RTK is universal but the init flag
