@@ -9,8 +9,8 @@
 
 import fs from 'fs';
 import path from 'path';
+import readline from 'readline';
 import { fileURLToPath } from 'url';
-import { ask } from '../lib/ui.js';
 import { writeRalphSh } from '../lib/generate-ralph-sh.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -32,7 +32,9 @@ export async function scaffoldRalph(cliName = 'claude') {
   if (existingDirs.length > 0) {
     console.warn('\nWarning: the following director' + (existingDirs.length > 1 ? 'ies' : 'y') + ' already exist and will be overwritten:');
     existingDirs.forEach(d => console.warn('  ' + d));
-    const answer = await ask('\nProceed and overwrite? [y/N]: ');
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const answer = await new Promise(resolve => rl.question('\nProceed and overwrite? [y/N]: ', resolve));
+    rl.close();
     if (answer.trim().toLowerCase() !== 'y') {
       console.log('Scaffold cancelled. No files were changed.');
       return;
