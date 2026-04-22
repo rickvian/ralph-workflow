@@ -3,9 +3,17 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-vi.mock('../bin/lib/ui.js', () => ({ ask: vi.fn(), rl: { close: vi.fn() } }));
+const mockQuestion = vi.fn();
+const mockClose = vi.fn();
+vi.mock('readline', () => ({
+  default: {
+    createInterface: vi.fn(() => ({
+      question: mockQuestion,
+      close: mockClose,
+    })),
+  },
+}));
 
-import { ask } from '../bin/lib/ui.js';
 import { scaffoldRalph } from '../bin/commands/scaffold.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,6 +26,7 @@ const TEST_DIR = path.join(os.tmpdir(), '.test-scaffold-vitest');
 describe('scaffoldRalph', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockQuestion.mockImplementation((_prompt, cb) => cb('y'));
     if (fs.existsSync(TEST_DIR)) {
       fs.rmSync(TEST_DIR, { recursive: true });
     }
@@ -91,14 +100,14 @@ describe('scaffoldRalph', () => {
   });
 
   it('should warn and prompt when scripts/ already exists, then overwrite on confirm', async () => {
-    ask.mockResolvedValue('y');
+    mockQuestion.mockImplementation((_prompt, cb) => cb('y'));
     const originalCwd = process.cwd();
     try {
       process.chdir(TEST_DIR);
       fs.mkdirSync(path.join(TEST_DIR, 'scripts'), { recursive: true });
       await scaffoldRalph('claude');
 
-      expect(ask).toHaveBeenCalledWith(expect.stringContaining('Proceed and overwrite?'));
+      expect(mockQuestion).toHaveBeenCalledWith(expect.stringContaining('Proceed and overwrite?'), expect.any(Function));
       expect(fs.existsSync(path.join(TEST_DIR, 'scripts', 'ralph', 'ralph.sh'))).toBe(true);
     } finally {
       process.chdir(originalCwd);
@@ -106,7 +115,7 @@ describe('scaffoldRalph', () => {
   });
 
   it('should abort scaffold when user declines overwrite prompt', async () => {
-    ask.mockResolvedValue('n');
+    mockQuestion.mockImplementation((_prompt, cb) => cb('n'));
     const originalCwd = process.cwd();
     try {
       process.chdir(TEST_DIR);
