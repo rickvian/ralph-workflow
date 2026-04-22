@@ -76,12 +76,6 @@ describe('writeDevContainer', () => {
       expect(ghMount).toBeDefined();
       expect(ghMount.target).toBe('/home/vscode/.config/gh');
       expect(ghMount.type).toBe('volume');
-
-      const tokenMount = config.mounts?.find(m => m.target === '/tmp/ralph_token');
-      expect(tokenMount).toBeDefined();
-      expect(tokenMount.source).toBe('${localWorkspaceFolder}/.ralph/token');
-      expect(tokenMount.type).toBe('bind');
-      expect(tokenMount.readonly).toBe(true);
     } finally {
       process.chdir(originalCwd);
     }
@@ -110,6 +104,81 @@ describe('writeDevContainer', () => {
       const sources = config.mounts?.map(m => m.source) ?? [];
       expect(sources).toContain(`gh-config-${TEST_SLUG}`);
       expect(sources).toContain(`claude-agents-vol-${TEST_SLUG}`);
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('always installs RTK and runs the claude-flavored init for claude', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
+      const config = readGenerated();
+      expect(config.postCreateCommand).toContain('rtk-ai/rtk');
+      expect(config.postCreateCommand).toMatch(/rtk init -g(?!\s--)/);
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('uses the per-CLI rtk init flag for non-claude CLIs', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini');
+      const config = readGenerated();
+      expect(config.postCreateCommand).toContain('rtk init -g --gemini');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('appends caveman install only when opted in and cliName is claude', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude', { caveman: true });
+      expect(readGenerated().postCreateCommand).toContain('claude plugin install caveman@caveman');
+
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
+      expect(readGenerated().postCreateCommand).not.toContain('caveman');
+
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini', { caveman: true });
+      expect(readGenerated().postCreateCommand).not.toContain('caveman');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('appends subagents clone only when opted in and cliName is claude', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude', { subagents: true });
+      expect(readGenerated().postCreateCommand).toContain('awesome-claude-code-subagents');
+
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
+      expect(readGenerated().postCreateCommand).not.toContain('awesome-claude-code-subagents');
+
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini', { subagents: true });
+      expect(readGenerated().postCreateCommand).not.toContain('awesome-claude-code-subagents');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('still appends credential.helper cleanup when GitHub is enabled alongside new tools', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', true, null, false, 'claude', { caveman: true });
+      const cmd = readGenerated().postCreateCommand;
+      expect(cmd).toContain('rtk init -g');
+      expect(cmd).toContain('credential.helper');
+      expect(cmd).toContain('caveman');
     } finally {
       process.chdir(originalCwd);
     }

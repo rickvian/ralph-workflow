@@ -15,36 +15,29 @@ import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 import { execSync } from 'child_process';
-import { writeDevContainer } from '../lib/write-devcontainer.js';
 
 /**
- * Full GitHub isolation setup flow.
- * @param {object}  config       - Base devcontainer config from the selected template.
- * @param {string}  templateName - Human-readable template name.
- * @param {boolean} debug        - Whether to inject isolation-check scripts.
+ * Git repository, GitHub repo creation, and PAT token setup flow.
+ * Devcontainer writing is handled by the caller.
  */
-export async function setupGitHubAccess(config, templateName, debug = false, cliName = 'claude') {
+export async function setupGitHubAccess() {
   const projectName = path.basename(process.cwd());
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q) => new Promise(resolve => rl.question(q, resolve));
 
-  /** // FIXME: if failed, give option for user to retry
-   give notes that github creation is using specific script to create **/
   console.log(`\nSetting up GitHub isolation for project: ${projectName}`);
-  
 
   _ensureGitRepo();
 
-  const userName = _getGitHubUsername();
+  const userName = await _getGitHubUsername(ask);
 
-  _createGitHubRepo(projectName, userName);
+  console.log('Note: a private GitHub repository will be created automatically using the gh CLI.');
+  await _createGitHubRepo(projectName, userName, ask);
 
   const token = await _promptForPAT(ask, projectName, userName);
   rl.close();
 
   _storeToken(token);
-
-  writeDevContainer(config, templateName, true, null, debug, cliName);
 }
 
 /** Initialise a git repo in cwd if one does not already exist. */
@@ -59,32 +52,59 @@ function _ensureGitRepo() {
 
 /**
  * Resolve the authenticated GitHub username via the gh CLI.
- * Exits with an error if gh is not authenticated.
- * @returns {string}
+ * Retries on failure until the user succeeds or declines.
+ * @param {function} ask
+ * @returns {Promise<string>}
  */
-function _getGitHubUsername() {
-  try {
-    return execSync('gh api user -q .login', { encoding: 'utf8' }).trim();
-  } catch {
-    console.error('Error: gh CLI not authenticated. Please run: gh auth login');
-    process.exit(1);
+async function _getGitHubUsername(ask) {
+  while (true) {
+    try {
+      return execSync('gh api user -q .login', { encoding: 'utf8', stdio: 'pipe' }).trim();
+    } catch (err) {
+      const stderr = (err.stderr || '').toString().trim();
+      console.error(`\nFailed to reach GitHub: ${stderr || 'unknown error'}`);
+      console.error('Ensure gh is authenticated (gh auth login) and you have internet access.');
+      const answer = await ask('Would you like to retry? (y/n): ');
+      if (answer.trim().toLowerCase() !== 'y') {
+        console.error('\nCannot continue without GitHub access. Run `gh auth login` and try again.');
+        process.exit(1);
+      }
+    }
   }
 }
 
 /**
  * Create a private GitHub repo for the current project and ensure a remote is set.
- * @param {string} projectName
- * @param {string} userName
+ * Retries on failure until the user succeeds or declines.
+ * @param {string}   projectName
+ * @param {string}   userName
+ * @param {function} ask
  */
-function _createGitHubRepo(projectName, userName) {
+async function _createGitHubRepo(projectName, userName, ask) {
   console.log('Creating private GitHub repository...');
-  try {
-    execSync(
-      `gh repo create "${projectName}" --private --source=. --push 2>/dev/null || gh repo create "${projectName}" --private`,
-      { stdio: 'inherit' }
-    );
-  } catch {
-    console.error('Warning: Could not create repo. It may already exist.');
+  while (true) {
+    try {
+      execSync(
+        `gh repo create "${projectName}" --private --source=. --push`,
+        { stdio: 'pipe' }
+      );
+      break;
+    } catch (err) {
+      const stderr = (err.stderr || '').toString();
+      if (stderr.toLowerCase().includes('already exists')) {
+        console.log('Repository already exists, continuing...');
+        break;
+      }
+      console.error(`\nFailed to create GitHub repository: ${stderr.trim() || 'unknown error'}`);
+      const answer = await ask('Would you like to retry? (y/n): ');
+      if (answer.trim().toLowerCase() !== 'y') {
+        console.error('\nCannot continue without a GitHub repository. Before re-running, check:');
+        console.error('  • gh auth status  — ensure you are authenticated');
+        console.error('  • The repository name is not already taken under a different account');
+        console.error('  • You have permission to create repositories on this account');
+        process.exit(1);
+      }
+    }
   }
 
   try {
