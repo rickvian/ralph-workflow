@@ -60,15 +60,16 @@ const promptMdCode = `# Ralph Agent Instructions
 8. Append learnings to progress.txt`
 
 const projectStructureCode = `bin/
-├── cli.js                          # entry point — main() and top-level flow
+├── cli.js                          # entry point — orchestrates prompts and setup steps
 ├── commands/
-│   ├── devcontainer.js             # template picker + GitHub question
-│   ├── github-access.js            # PAT creation and storage
-│   └── scaffold.js                 # copies templates into scripts/ralph/
+│   ├── devcontainer.js             # template picker (selectTemplate)
+│   ├── github-access.js            # git repo + GitHub repo + PAT setup (with retry)
+│   └── scaffold.js                 # copies templates into scripts/ralph/ (with overwrite prompt)
 ├── lib/
 │   ├── ui.js                       # ask() and selectMenu() terminal helpers
 │   ├── devcontainer-templates.js   # the 5 container image definitions
-│   └── write-devcontainer.js       # builds and writes devcontainer.json
+│   └── write-devcontainer.js       # builds devcontainer.json — RTK install, per-CLI rtk init,
+│                                   #   optional Caveman / subagents (Claude only)
 └── scripts/
     ├── validate-isolation.sh.js    # embedded shell script (quick token check)
     └── check-isolation.sh.js       # embedded shell script (full isolation audit)
@@ -107,12 +108,18 @@ export default function UsageGuidePage() {
         </p>
         <CodeBlock lang="bash">{`mkdir my-project && cd my-project
 npx ralph-workflow`}</CodeBlock>
-        <p className="text-gray-400 text-sm mb-2">The wizard will ask:</p>
+        <p className="text-gray-400 text-sm mb-2">The wizard will ask, in order:</p>
         <ol className="list-decimal pl-5 space-y-2 text-gray-400 text-sm">
-          <li><strong className="text-gray-200">Dev Container template</strong> — choose Node, Python, Ubuntu, etc.</li>
-          <li><strong className="text-gray-200">GitHub access</strong> — optionally create a fine-grained PAT scoped to one repo.</li>
-          <li><strong className="text-gray-200">AI CLI</strong> — pick claude, codex, gemini, or opencode.</li>
+          <li><strong className="text-gray-200">AI CLI</strong> — pick claude, codex, gemini, or opencode. This choice drives the matching <code className="bg-white/10 text-brand-purple px-1 rounded">rtk init</code> flag below.</li>
+          <li><strong className="text-gray-200">Dev Container isolation</strong> — set up a VS Code Dev Container so the host's credentials are not forwarded in.</li>
+          <li><strong className="text-gray-200">GitHub access</strong> — optionally create a fine-grained PAT scoped to one repo. This is now <em>independent</em> of the Dev Container choice, so you can have isolation without a PAT, a PAT without isolation, both, or neither.</li>
+          <li><strong className="text-gray-200">Claude extras</strong> (only if you picked <code className="bg-white/10 text-brand-purple px-1 rounded">claude</code>) — opt in to the <a href="https://github.com/JuliusBrussee/caveman" className="text-brand-purple underline">Caveman</a> debugging plugin and/or the <a href="https://github.com/VoltAgent/awesome-claude-code-subagents" className="text-brand-purple underline">awesome-claude-code-subagents</a> collection. Both default to no.</li>
+          <li><strong className="text-gray-200">Dev Container template</strong> (only if isolation is enabled) — choose Node, Python, Ubuntu, etc.</li>
         </ol>
+        <p className="text-gray-400 text-sm mt-3">
+          If <code className="bg-white/10 text-brand-purple px-1 rounded">scripts/</code> already exists in your project, the scaffold step
+          warns you and asks for confirmation before overwriting anything.
+        </p>
       </section>
 
       {/* Set up isolation */}
@@ -184,6 +191,44 @@ claude                                     # log in
 claude --dangerously-skip-permissions      # accept the warning once`}</CodeBlock>
         <p className="text-gray-400 text-sm">
           The <code className="bg-white/10 text-brand-purple px-1 rounded">--dangerously-skip-permissions</code> acceptance only needs to happen once per container.
+        </p>
+      </section>
+
+      {/* RTK + Claude extras */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-semibold mb-3 text-brand-purple">RTK and Claude-only Extras</h2>
+        <p className="text-gray-400 text-sm mb-3">
+          Every generated <code className="bg-white/10 text-brand-purple px-1 rounded">devcontainer.json</code> auto-installs
+          {' '}<a href="https://github.com/rtk-ai/rtk" className="text-brand-purple underline">RTK</a> and runs the per-CLI{' '}
+          <code className="bg-white/10 text-brand-purple px-1 rounded">rtk init</code> variant via
+          {' '}<code className="bg-white/10 text-brand-purple px-1 rounded">postCreateCommand</code>. The install script is pinned to a
+          specific commit SHA to avoid supply-chain drift, and the init command is idempotent — re-running a container rebuild
+          won't duplicate anything.
+        </p>
+        <CodeBlock lang="bash">{`# Per-CLI rtk init selected automatically
+claude    → rtk init -g
+codex     → rtk init -g --codex
+gemini    → rtk init -g --gemini
+opencode  → rtk init -g --opencode`}</CodeBlock>
+        <p className="text-gray-400 text-sm mb-3">
+          If you picked <code className="bg-white/10 text-brand-purple px-1 rounded">claude</code> as your CLI, two optional extras are available:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 text-gray-400 text-sm">
+          <li>
+            <strong className="text-gray-200">Caveman</strong> — the <a href="https://github.com/JuliusBrussee/caveman" className="text-brand-purple underline">Caveman</a> plugin is registered and installed via{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">claude plugin install caveman@caveman</code>. Guarded so an existing install in the{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">.claude</code> volume is not reinstalled on rebuild.
+          </li>
+          <li>
+            <strong className="text-gray-200">awesome-claude-code-subagents</strong> — a shallow clone of{' '}
+            <a href="https://github.com/VoltAgent/awesome-claude-code-subagents" className="text-brand-purple underline">VoltAgent's curated list</a> into{' '}
+            <code className="bg-white/10 text-brand-purple px-1 rounded">/home/vscode/.claude/agents/awesome-subagents</code>, which lives
+            inside the project-scoped <code className="bg-white/10 text-brand-purple px-1 rounded">.claude</code> Docker volume and persists across rebuilds.
+          </li>
+        </ul>
+        <p className="text-gray-400 text-sm mt-3">
+          Both extras default to <em>no</em> and are gated on <code className="bg-white/10 text-brand-purple px-1 rounded">cliName === 'claude'</code>; the prompts
+          are simply skipped for other CLIs.
         </p>
       </section>
 
