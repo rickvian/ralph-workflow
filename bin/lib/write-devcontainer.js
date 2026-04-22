@@ -10,6 +10,40 @@ import fs from 'fs';
 import path from 'path';
 
 /**
+ * RTK install script (universal Linux/macOS). Idempotent — re-running
+ * upgrades RTK in place.
+ */
+const RTK_INSTALL = 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh';
+
+/**
+ * Per-CLI `rtk init` invocation. RTK is universal but the init flag
+ * selects which tool's config it rewrites.
+ */
+const RTK_INIT_BY_CLI = {
+  claude: 'rtk init -g',
+  codex: 'rtk init -g --codex',
+  gemini: 'rtk init -g --gemini',
+  opencode: 'rtk init -g --opencode',
+};
+
+/**
+ * Caveman install command (Claude Code only). Guarded so the
+ * plugin marketplace registration and install are skipped when the
+ * `.claude` volume already contains the plugin from a prior build.
+ */
+const CAVEMAN_INSTALL_CLAUDE =
+  '[ -d /home/vscode/.claude/plugins/caveman ] || (claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman)';
+
+/**
+ * Shallow-clones the VoltAgent awesome-claude-code-subagents list into
+ * the project-scoped `.claude/agents` volume. Guarded so a second
+ * container build doesn't re-clone into an already-populated directory
+ * and break the `&&` chain.
+ */
+const SUBAGENTS_CLONE =
+  '[ -d /home/vscode/.claude/agents/awesome-subagents ] || (mkdir -p /home/vscode/.claude/agents && git clone --depth=1 https://github.com/VoltAgent/awesome-claude-code-subagents /home/vscode/.claude/agents/awesome-subagents)';
+
+/**
  * VS Code settings that prevent the host's git credentials from being
  * forwarded into the container.
  */
@@ -54,13 +88,16 @@ function _projectSlug() {
 /**
  * Build and write `.devcontainer/devcontainer.json`.
  *
- * @param {object}  config        - Base devcontainer config from a template.
- * @param {string}  templateName  - Human-readable template name for log output.
- * @param {boolean} setupGitHub   - Whether to mount a PAT token and configure gh CLI.
- * @param {string|null} _tokenPath - Unused; kept for backward compatibility.
- * @param {string}      cliName   - The AI CLI selected by the user (e.g. 'claude').
+ * @param {object}  config           - Base devcontainer config from a template.
+ * @param {string}  templateName     - Human-readable template name for log output.
+ * @param {boolean} setupGitHub      - Whether to mount a PAT token and configure gh CLI.
+ * @param {string|null} _tokenPath   - Unused; kept for backward compatibility.
+ * @param {string}  cliName          - The AI CLI selected by the user (e.g. 'claude').
+ * @param {object}  [tools]          - Optional tool opt-ins.
+ * @param {boolean} [tools.caveman]  - Install the Caveman debugging plugin.
+ * @param {boolean} [tools.subagents] - Clone the awesome-claude-code-subagents list.
  */
-export function writeDevContainer(config, templateName, setupGitHub = false, _tokenPath = null, _debug = false, cliName = 'claude') {
+export function writeDevContainer(config, templateName, setupGitHub = false, _tokenPath = null, _debug = false, cliName = 'claude', tools = {}) {
   const devcontainerDir = path.resolve(process.cwd(), '.devcontainer');
   const devcontainerFile = path.join(devcontainerDir, 'devcontainer.json');
 
@@ -113,21 +150,25 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     finalConfig.mounts = [
       ...(finalConfig.mounts || []),
       { source: `gh-config-${slug}`, target: '/home/vscode/.config/gh', type: 'volume' },
+      { source: '${localWorkspaceFolder}/.ralph/token', target: '/tmp/ralph_token', type: 'bind', readonly: true },
     ];
-
-    const existingCommand = finalConfig.postCreateCommand || '';
-    const cleanupCommand = 'git config --global --unset-all credential.helper || true';
-    finalConfig.postCreateCommand = existingCommand
-      ? `${existingCommand} && ${cleanupCommand}`
-      : cleanupCommand;
 
     finalConfig.postStartCommand =
       'unset VSCODE_GIT_IPC_HANDLE GIT_ASKPASS VSCODE_GIT_ASKPASS_NODE VSCODE_GIT_ASKPASS_MAIN' +
       ' && git config --global --unset-all credential.helper || true' +
       ' && gh auth login --with-token < ${containerWorkspaceFolder}/.ralph/token && gh auth setup-git';
-  } else {
-    finalConfig.postCreateCommand = finalConfig.postCreateCommand || '';
   }
+
+  const additions = [
+    RTK_INSTALL,
+    RTK_INIT_BY_CLI[cliName] ?? RTK_INIT_BY_CLI.claude,
+  ];
+  if (tools.caveman && cliName === 'claude') additions.push(CAVEMAN_INSTALL_CLAUDE);
+  if (tools.subagents && cliName === 'claude') additions.push(SUBAGENTS_CLONE);
+  if (useGitHub) additions.push('git config --global --unset-all credential.helper || true');
+
+  const existingCommand = finalConfig.postCreateCommand || '';
+  finalConfig.postCreateCommand = [existingCommand, ...additions].filter(Boolean).join(' && ');
 
   fs.writeFileSync(devcontainerFile, JSON.stringify(finalConfig, null, 2));
 
