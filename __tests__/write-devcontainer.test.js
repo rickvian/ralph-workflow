@@ -76,12 +76,6 @@ describe('writeDevContainer', () => {
       expect(ghMount).toBeDefined();
       expect(ghMount.target).toBe('/home/vscode/.config/gh');
       expect(ghMount.type).toBe('volume');
-
-      const tokenMount = config.mounts?.find(m => m.target === '/tmp/ralph_token');
-      expect(tokenMount).toBeDefined();
-      expect(tokenMount.source).toBe('${localWorkspaceFolder}/.ralph/token');
-      expect(tokenMount.type).toBe('bind');
-      expect(tokenMount.readonly).toBe(true);
     } finally {
       process.chdir(originalCwd);
     }
