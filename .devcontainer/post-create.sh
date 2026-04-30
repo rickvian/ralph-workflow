@@ -9,7 +9,10 @@ npm install -g @anthropic-ai/claude-code
 sudo chown -R node:node /home/node/.claude /home/node/.config/gh
 
 # Install RTK (commit-pinned to prevent supply-chain risk from a mutable branch ref)
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/80a6fe606f73b19e52b0b330d242e62a6c07be42/install.sh | sh
+# echo "n" answers the interactive telemetry prompt; rtk telemetry disable is belt-and-suspenders
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/80a6fe606f73b19e52b0b330d242e62a6c07be42/install.sh -o /tmp/rtk-install.sh
+echo "n" | sh /tmp/rtk-install.sh
+rtk telemetry disable
 
 # Initialize RTK for this CLI
 rtk init -g
