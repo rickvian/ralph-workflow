@@ -45,7 +45,7 @@ describe('writeDevContainer', () => {
       const config = readGenerated();
       const claudeMount = config.mounts?.find(m => m.source === `claude-agents-vol-${TEST_SLUG}`);
       expect(claudeMount).toBeDefined();
-      expect(claudeMount.target).toBe('/home/vscode/.claude');
+      expect(claudeMount.target).toBe('/home/node/.claude');
       expect(claudeMount.type).toBe('volume');
     } finally {
       process.chdir(originalCwd);
@@ -74,7 +74,7 @@ describe('writeDevContainer', () => {
       const config = readGenerated();
       const ghMount = config.mounts?.find(m => m.source === `gh-config-${TEST_SLUG}`);
       expect(ghMount).toBeDefined();
-      expect(ghMount.target).toBe('/home/vscode/.config/gh');
+      expect(ghMount.target).toBe('/home/node/.config/gh');
       expect(ghMount.type).toBe('volume');
     } finally {
       process.chdir(originalCwd);
@@ -165,6 +165,50 @@ describe('writeDevContainer', () => {
 
       writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini', { subagents: true });
       expect(readGenerated().postCreateCommand).not.toContain('awesome-claude-code-subagents');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('writes remoteUser matching the template base image (Node.js → node)', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', true, null, false, 'claude');
+      expect(readGenerated().remoteUser).toBe('node');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('writes remoteUser=vscode for templates based on the python/base images', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Python', false, null, false, 'claude');
+      expect(readGenerated().remoteUser).toBe('vscode');
+      writeDevContainer(BASE_CONFIG, 'Minimal Ubuntu', false, null, false, 'claude');
+      expect(readGenerated().remoteUser).toBe('vscode');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  // Regression guard for the bug where ${containerEnv:HOME} was used as a
+  // mount target — Docker rejects mount paths that aren't absolute, because
+  // mounts are resolved before the container exists.
+  it('always writes absolute mount targets (no unresolved variables)', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      for (const tpl of ['Node.js', 'Python', 'Python + Node', 'Minimal Ubuntu', 'Full Dev Environment']) {
+        writeDevContainer(BASE_CONFIG, tpl, true, null, false, 'claude');
+        const config = readGenerated();
+        for (const m of config.mounts ?? []) {
+          expect(m.target, `${tpl} mount ${m.source}`).toMatch(/^\//);
+          expect(m.target, `${tpl} mount ${m.source}`).not.toContain('${');
+        }
+      }
     } finally {
       process.chdir(originalCwd);
     }
