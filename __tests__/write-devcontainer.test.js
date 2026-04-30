@@ -45,7 +45,7 @@ describe('writeDevContainer', () => {
       const config = readGenerated();
       const claudeMount = config.mounts?.find(m => m.source === `claude-agents-vol-${TEST_SLUG}`);
       expect(claudeMount).toBeDefined();
-      expect(claudeMount.target).toBe('/home/vscode/.claude');
+      expect(claudeMount.target).toBe('${containerEnv:HOME}/.claude');
       expect(claudeMount.type).toBe('volume');
     } finally {
       process.chdir(originalCwd);
@@ -74,7 +74,7 @@ describe('writeDevContainer', () => {
       const config = readGenerated();
       const ghMount = config.mounts?.find(m => m.source === `gh-config-${TEST_SLUG}`);
       expect(ghMount).toBeDefined();
-      expect(ghMount.target).toBe('/home/vscode/.config/gh');
+      expect(ghMount.target).toBe('${containerEnv:HOME}/.config/gh');
       expect(ghMount.type).toBe('volume');
     } finally {
       process.chdir(originalCwd);

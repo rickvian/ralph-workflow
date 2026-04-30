@@ -33,7 +33,7 @@ const RTK_INIT_BY_CLI = {
  * volume already contains the plugin from a prior build.
  */
 const CAVEMAN_INSTALL_CLAUDE =
-  '[ -d /home/vscode/.claude/plugins/caveman ] || (claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman)';
+  '[ -d "$HOME/.claude/plugins/caveman" ] || (claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman)';
 
 /**
  * Shallow-clones the VoltAgent awesome-claude-code-subagents list into
@@ -42,7 +42,7 @@ const CAVEMAN_INSTALL_CLAUDE =
  * and break the `&&` chain.
  */
 const SUBAGENTS_CLONE =
-  '[ -d /home/vscode/.claude/agents/awesome-subagents ] || (mkdir -p /home/vscode/.claude/agents && git clone --depth=1 https://github.com/VoltAgent/awesome-claude-code-subagents /home/vscode/.claude/agents/awesome-subagents)';
+  '[ -d "$HOME/.claude/agents/awesome-subagents" ] || (mkdir -p "$HOME/.claude/agents" && git clone --depth=1 https://github.com/VoltAgent/awesome-claude-code-subagents "$HOME/.claude/agents/awesome-subagents")';
 
 /**
  * VS Code settings that prevent the host's git credentials from being
@@ -135,7 +135,7 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     // volume so switching between ralph projects doesn't clobber each other's state.
     finalConfig.mounts = [
       ...(finalConfig.mounts || []),
-      { source: `claude-agents-vol-${slug}`, target: '/home/vscode/.claude', type: 'volume' },
+      { source: `claude-agents-vol-${slug}`, target: '${containerEnv:HOME}/.claude', type: 'volume' },
     ];
   }
 
@@ -150,7 +150,7 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     // The project-scoped volume name prevents cross-project gh auth collisions.
     finalConfig.mounts = [
       ...(finalConfig.mounts || []),
-      { source: `gh-config-${slug}`, target: '/home/vscode/.config/gh', type: 'volume' },
+      { source: `gh-config-${slug}`, target: '${containerEnv:HOME}/.config/gh', type: 'volume' },
     ];
 
     finalConfig.postStartCommand =
