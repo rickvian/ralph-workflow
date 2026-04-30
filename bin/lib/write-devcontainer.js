@@ -56,6 +56,26 @@ const ISOLATION_VSCODE_SETTINGS = {
 };
 
 /**
+ * Per-template default user and home directory. Keyed by `templateName`
+ * (matches `TEMPLATES[].name` in devcontainer-templates.js).
+ *
+ * Mount targets MUST be absolute paths — Docker rejects unresolved variables
+ * like `${containerEnv:HOME}` because `mounts` is consumed by `docker run`
+ * before the container exists, so `containerEnv:*` cannot be resolved at
+ * that point. We therefore write a literal home path and pin `remoteUser`
+ * to the user that the base image actually ships with.
+ */
+const TEMPLATE_USERS = {
+  'Node.js':              { user: 'node',   home: '/home/node' },
+  'Python':               { user: 'vscode', home: '/home/vscode' },
+  'Python + Node':        { user: 'vscode', home: '/home/vscode' },
+  'Minimal Ubuntu':       { user: 'vscode', home: '/home/vscode' },
+  'Full Dev Environment': { user: 'vscode', home: '/home/vscode' },
+};
+
+const DEFAULT_USER = { user: 'vscode', home: '/home/vscode' };
+
+/**
  * Container environment overrides that blank out VS Code credential-
  * forwarding variables injected automatically at container start.
  */
@@ -111,9 +131,11 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
   // Mount and configure gh auth whenever a token is present, even if the user
   // skipped the GitHub setup step on a subsequent run.
   const useGitHub = setupGitHub || tokenExists;
+  const { user: remoteUser, home } = TEMPLATE_USERS[templateName] ?? DEFAULT_USER;
 
   const finalConfig = {
     ...config,
+    remoteUser,
     customizations: {
       ...config.customizations,
       vscode: {
@@ -135,7 +157,7 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     // volume so switching between ralph projects doesn't clobber each other's state.
     finalConfig.mounts = [
       ...(finalConfig.mounts || []),
-      { source: `claude-agents-vol-${slug}`, target: '${containerEnv:HOME}/.claude', type: 'volume' },
+      { source: `claude-agents-vol-${slug}`, target: `${home}/.claude`, type: 'volume' },
     ];
   }
 
@@ -150,7 +172,7 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     // The project-scoped volume name prevents cross-project gh auth collisions.
     finalConfig.mounts = [
       ...(finalConfig.mounts || []),
-      { source: `gh-config-${slug}`, target: '${containerEnv:HOME}/.config/gh', type: 'volume' },
+      { source: `gh-config-${slug}`, target: `${home}/.config/gh`, type: 'volume' },
     ];
 
     finalConfig.postStartCommand =
@@ -159,7 +181,19 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
       ' && gh auth login --with-token < ${containerWorkspaceFolder}/.ralph/token && gh auth setup-git';
   }
 
+  // Named volumes are created owned by root, but we run as `remoteUser`.
+  // chown the mountpoints we added so subsequent commands (rtk init, claude
+  // plugin install, gh auth) can write into them. MS dev container base
+  // images grant passwordless sudo to their default user.
+  const ownedMountPaths = [];
+  if (cliName === 'claude') ownedMountPaths.push(`${home}/.claude`);
+  if (useGitHub) ownedMountPaths.push(`${home}/.config/gh`);
+  const fixOwnership = ownedMountPaths.length
+    ? `sudo chown -R ${remoteUser}:${remoteUser} ${ownedMountPaths.join(' ')}`
+    : null;
+
   const additions = [
+    fixOwnership,
     RTK_INSTALL,
     RTK_INIT_BY_CLI[cliName] ?? RTK_INIT_BY_CLI.claude,
   ];
