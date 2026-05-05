@@ -28,6 +28,7 @@ export async function setupGitHubAccess() {
   console.log(`\nSetting up GitHub isolation for project: ${projectName}`);
 
   _ensureGitRepo();
+  _ensureInitialCommit(projectName);
 
   const userName = await _getGitHubUsername(ask);
 
@@ -48,6 +49,38 @@ function _ensureGitRepo() {
     console.log('Initializing git repository...');
     execSync('git init -b main 2>/dev/null || git init 2>/dev/null', { stdio: 'inherit' });
   }
+}
+
+/**
+ * Ensure the repo has at least one commit so `gh repo create --push` succeeds.
+ *
+ * `gh repo create --source=. --push` refuses to run when the local repo has
+ * zero commits ("--push enabled but no commits found"). On a fresh `npx
+ * ralph-workflow` run against an empty directory, the working tree may be
+ * empty or only contain unstaged files, so we create a README placeholder
+ * if needed and create an initial commit.
+ *
+ * @param {string} projectName
+ */
+function _ensureInitialCommit(projectName) {
+  try {
+    execSync('git rev-parse HEAD', { stdio: 'pipe' });
+    return; // at least one commit already exists
+  } catch {
+    // no commits yet — fall through
+  }
+
+  const readmePath = path.join(process.cwd(), 'README.md');
+  if (!fs.existsSync(readmePath)) {
+    const hasAnyTrackable = execSync('git status --porcelain', { encoding: 'utf8' }).trim().length > 0;
+    if (!hasAnyTrackable) {
+      fs.writeFileSync(readmePath, `# ${projectName}\n`);
+    }
+  }
+
+  console.log('Creating initial commit so the new GitHub repo has something to push...');
+  execSync('git add -A', { stdio: 'inherit' });
+  execSync('git commit -m "chore: initial commit"', { stdio: 'inherit' });
 }
 
 /**
