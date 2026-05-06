@@ -18,6 +18,13 @@ const RTK_INSTALL = [
   'rtk telemetry disable',
 ].join('\n');
 
+const CLI_INSTALL_MAP = {
+  claude:   'npm install -g @anthropic-ai/claude-code',
+  gemini:   'npm install -g @google/gemini-cli',
+  codex:    'npm install -g @openai/codex',
+  opencode: 'npm install -g opencode',
+};
+
 const RTK_INIT_BY_CLI = {
   claude:    'rtk init -g',
   codex:     'rtk init -g --codex',
@@ -253,7 +260,7 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     ? `sudo chown -R ${remoteUser}:${remoteUser} ${ownedMountPaths.join(' ')}`
     : null;
 
-  const cliInstall = finalConfig.postCreateCommand || null;
+  const cliInstall = CLI_INSTALL_MAP[cliName] ?? null;
 
   const postCreateContent = _buildPostCreateScript({
     cliInstall,
