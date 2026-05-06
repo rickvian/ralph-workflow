@@ -148,6 +148,30 @@ describe('writeDevContainer', () => {
     }
   });
 
+  it('installs the correct CLI — not claude — when cliName is gemini', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini');
+      const script = readGeneratedScript('post-create.sh');
+      expect(script).toContain('@google/gemini-cli');
+      expect(script).not.toContain('@anthropic-ai/claude-code');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('installs claude when cliName is claude', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
+      expect(readGeneratedScript('post-create.sh')).toContain('@anthropic-ai/claude-code');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
   it('appends caveman install only when opted in and cliName is claude', () => {
     const originalCwd = process.cwd();
     try {

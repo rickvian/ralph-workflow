@@ -13,6 +13,13 @@ import path from 'path';
 // Pinned to v0.37.2 (80a6fe606f73b19e52b0b330d242e62a6c07be42) to prevent supply-chain risk from a mutable branch ref.
 const RTK_INSTALL = 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/80a6fe606f73b19e52b0b330d242e62a6c07be42/install.sh | sh';
 
+const CLI_INSTALL_MAP = {
+  claude:   'npm install -g @anthropic-ai/claude-code',
+  gemini:   'npm install -g @google/gemini-cli',
+  codex:    'npm install -g @openai/codex',
+  opencode: 'npm install -g opencode',
+};
+
 const RTK_INIT_BY_CLI = {
   claude:    'rtk init -g',
   codex:     'rtk init -g --codex',
@@ -248,7 +255,7 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     ? `sudo chown -R ${remoteUser}:${remoteUser} ${ownedMountPaths.join(' ')}`
     : null;
 
-  const cliInstall = finalConfig.postCreateCommand || null;
+  const cliInstall = CLI_INSTALL_MAP[cliName] ?? null;
 
   const postCreateContent = _buildPostCreateScript({
     cliInstall,
