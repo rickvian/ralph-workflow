@@ -11,7 +11,12 @@ import fs from 'fs';
 import path from 'path';
 
 // Pinned to v0.37.2 (80a6fe606f73b19e52b0b330d242e62a6c07be42) to prevent supply-chain risk from a mutable branch ref.
-const RTK_INSTALL = 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/80a6fe606f73b19e52b0b330d242e62a6c07be42/install.sh | sh';
+// Download first so echo "n" can answer the interactive telemetry prompt; rtk telemetry disable is belt-and-suspenders.
+const RTK_INSTALL = [
+  'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/80a6fe606f73b19e52b0b330d242e62a6c07be42/install.sh -o /tmp/rtk-install.sh',
+  'echo "n" | sh /tmp/rtk-install.sh',
+  'rtk telemetry disable',
+].join('\n');
 
 const CLI_INSTALL_MAP = {
   claude:   'npm install -g @anthropic-ai/claude-code',
