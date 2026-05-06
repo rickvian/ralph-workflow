@@ -37,6 +37,10 @@ describe('writeDevContainer', () => {
     );
   }
 
+  function readGeneratedScript(name) {
+    return fs.readFileSync(path.join(TEST_DIR, '.devcontainer', name), 'utf-8');
+  }
+
   it('adds project-scoped claude-agents-vol mount when cliName is claude', () => {
     const originalCwd = process.cwd();
     try {
@@ -109,14 +113,25 @@ describe('writeDevContainer', () => {
     }
   });
 
+  it('sets postCreateCommand to the short script invocation', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
+      expect(readGenerated().postCreateCommand).toBe('bash .devcontainer/post-create.sh');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
   it('always installs RTK and runs the claude-flavored init for claude', () => {
     const originalCwd = process.cwd();
     try {
       process.chdir(TEST_DIR);
       writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
-      const config = readGenerated();
-      expect(config.postCreateCommand).toContain('rtk-ai/rtk');
-      expect(config.postCreateCommand).toMatch(/rtk init -g(?!\s--)/);
+      const script = readGeneratedScript('post-create.sh');
+      expect(script).toContain('rtk-ai/rtk');
+      expect(script).toMatch(/rtk init -g(?!\s--)/);
     } finally {
       process.chdir(originalCwd);
     }
@@ -127,8 +142,31 @@ describe('writeDevContainer', () => {
     try {
       process.chdir(TEST_DIR);
       writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini');
-      const config = readGenerated();
-      expect(config.postCreateCommand).toContain('rtk init -g --gemini');
+      expect(readGeneratedScript('post-create.sh')).toContain('rtk init -g --gemini');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('installs the correct CLI — not claude — when cliName is gemini', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini');
+      const script = readGeneratedScript('post-create.sh');
+      expect(script).toContain('@google/gemini-cli');
+      expect(script).not.toContain('@anthropic-ai/claude-code');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('installs claude when cliName is claude', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
+      expect(readGeneratedScript('post-create.sh')).toContain('@anthropic-ai/claude-code');
     } finally {
       process.chdir(originalCwd);
     }
@@ -140,13 +178,13 @@ describe('writeDevContainer', () => {
       process.chdir(TEST_DIR);
 
       writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude', { caveman: true });
-      expect(readGenerated().postCreateCommand).toContain('claude plugin install caveman@caveman');
+      expect(readGeneratedScript('post-create.sh')).toContain('claude plugin install caveman@caveman');
 
       writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
-      expect(readGenerated().postCreateCommand).not.toContain('caveman');
+      expect(readGeneratedScript('post-create.sh')).not.toContain('caveman');
 
       writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini', { caveman: true });
-      expect(readGenerated().postCreateCommand).not.toContain('caveman');
+      expect(readGeneratedScript('post-create.sh')).not.toContain('caveman');
     } finally {
       process.chdir(originalCwd);
     }
@@ -158,13 +196,13 @@ describe('writeDevContainer', () => {
       process.chdir(TEST_DIR);
 
       writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude', { subagents: true });
-      expect(readGenerated().postCreateCommand).toContain('awesome-claude-code-subagents');
+      expect(readGeneratedScript('post-create.sh')).toContain('awesome-claude-code-subagents');
 
       writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
-      expect(readGenerated().postCreateCommand).not.toContain('awesome-claude-code-subagents');
+      expect(readGeneratedScript('post-create.sh')).not.toContain('awesome-claude-code-subagents');
 
       writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini', { subagents: true });
-      expect(readGenerated().postCreateCommand).not.toContain('awesome-claude-code-subagents');
+      expect(readGeneratedScript('post-create.sh')).not.toContain('awesome-claude-code-subagents');
     } finally {
       process.chdir(originalCwd);
     }
@@ -214,15 +252,43 @@ describe('writeDevContainer', () => {
     }
   });
 
-  it('still appends credential.helper cleanup when GitHub is enabled alongside new tools', () => {
+  it('still writes credential.helper cleanup into post-create.sh when GitHub is enabled', () => {
     const originalCwd = process.cwd();
     try {
       process.chdir(TEST_DIR);
       writeDevContainer(BASE_CONFIG, 'Node.js', true, null, false, 'claude', { caveman: true });
-      const cmd = readGenerated().postCreateCommand;
-      expect(cmd).toContain('rtk init -g');
-      expect(cmd).toContain('credential.helper');
-      expect(cmd).toContain('caveman');
+      const script = readGeneratedScript('post-create.sh');
+      expect(script).toContain('rtk init -g');
+      expect(script).toContain('credential.helper');
+      expect(script).toContain('caveman');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('creates post-start.sh and sets postStartCommand when GitHub is enabled', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', true, null, false, 'claude');
+      const config = readGenerated();
+      expect(config.postStartCommand).toBe('bash .devcontainer/post-start.sh ${containerWorkspaceFolder}');
+      const script = readGeneratedScript('post-start.sh');
+      expect(script).toContain('gh auth login --with-token');
+      expect(script).toContain('gh auth setup-git');
+      expect(script).toContain('.ralph/token');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('does not create post-start.sh when GitHub is not enabled', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
+      expect(fs.existsSync(path.join(TEST_DIR, '.devcontainer', 'post-start.sh'))).toBe(false);
+      expect(readGenerated().postStartCommand).toBeUndefined();
     } finally {
       process.chdir(originalCwd);
     }

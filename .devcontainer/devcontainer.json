@@ -1,7 +1,7 @@
 {
   "name": "Node.js",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:24",
-  "postCreateCommand": "npm install -g @anthropic-ai/claude-code && sudo chown -R node:node /home/node/.claude /home/node/.config/gh && curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/80a6fe606f73b19e52b0b330d242e62a6c07be42/install.sh | sh && rtk init -g && [ -d \"$HOME/.claude/plugins/caveman\" ] || (claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman) && [ -d \"$HOME/.claude/agents/awesome-subagents\" ] || (mkdir -p \"$HOME/.claude/agents\" && git clone --depth=1 https://github.com/VoltAgent/awesome-claude-code-subagents \"$HOME/.claude/agents/awesome-subagents\") && git config --global --unset-all credential.helper || true",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
   "remoteEnv": {
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
   },
@@ -46,5 +46,5 @@
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "postStartCommand": "unset VSCODE_GIT_IPC_HANDLE GIT_ASKPASS VSCODE_GIT_ASKPASS_NODE VSCODE_GIT_ASKPASS_MAIN && git config --global --unset-all credential.helper || true && gh auth login --with-token < ${containerWorkspaceFolder}/.ralph/token && gh auth setup-git"
+  "postStartCommand": "bash .devcontainer/post-start.sh ${containerWorkspaceFolder}"
 }
