@@ -99,6 +99,22 @@ describe('scaffoldRalph', () => {
     }
   });
 
+  it('should create .ralph-version file with package version', async () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      await scaffoldRalph('claude');
+
+      const versionFilePath = path.join(TEST_DIR, 'scripts', 'ralph', '.ralph-version');
+      expect(fs.existsSync(versionFilePath)).toBe(true);
+
+      const content = fs.readFileSync(versionFilePath, 'utf-8').trim();
+      expect(content).toMatch(/^ralph-workflow@\d+\.\d+\.\d+$/);
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
   it('should warn and prompt when scripts/ already exists, then overwrite on confirm', async () => {
     mockQuestion.mockImplementation((_prompt, cb) => cb('y'));
     const originalCwd = process.cwd();
