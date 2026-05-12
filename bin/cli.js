@@ -29,7 +29,7 @@ const { version } = require('../package.json');
 
 const DEBUG = process.argv.includes('--check-isolation');
 
-// Interpolates two RGB colours across the characters of a string using ANSI true-colour codes.
+// Interpolates two RGB colors across the characters of a string using ANSI true-color codes.
 function gradient(text, [r1, g1, b1], [r2, g2, b2]) {
   const len = text.length;
   return text.split('').map((ch, i) => {
