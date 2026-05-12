@@ -107,6 +107,12 @@ async function main() {
     wantsSubagents = subagentsAnswer.trim().toLowerCase() === 'y';
   }
 
+  let wantsPlaywrightMcp = false;
+  if (cliName === 'claude') {
+    const playwrightAnswer = await ask('Install Playwright MCP server? [y/N]: ');
+    wantsPlaywrightMcp = playwrightAnswer.trim().toLowerCase() === 'y';
+  }
+
   // Template selection uses raw keypress mode and closes rl — must come after all ask() calls.
   let template = null;
   if (wantsIsolation) {
@@ -115,7 +121,7 @@ async function main() {
     rl.close();
   }
 
-  const tools = { caveman: wantsCaveman, subagents: wantsSubagents };
+  const tools = { caveman: wantsCaveman, subagents: wantsSubagents, playwrightMcp: wantsPlaywrightMcp };
 
   if (!wantsIsolation && !wantsGitHub) {
     console.log('\n  ⚠️  Proceeding without isolation. Be careful.\n');

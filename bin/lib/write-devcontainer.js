@@ -41,6 +41,10 @@ const CAVEMAN_INSTALL_CLAUDE =
 const SUBAGENTS_CLONE =
   '[ -d "$HOME/.claude/agents/awesome-subagents" ] || (mkdir -p "$HOME/.claude/agents" && git clone --depth=1 https://github.com/VoltAgent/awesome-claude-code-subagents "$HOME/.claude/agents/awesome-subagents")';
 
+// Guarded so a rebuilt volume skips re-registration if already present.
+const PLAYWRIGHT_MCP_INSTALL =
+  'claude mcp get playwright 2>/dev/null || claude mcp add playwright -- npx @playwright/mcp@latest';
+
 const ISOLATION_VSCODE_SETTINGS = {
   'git.terminalAuthentication': false,
   'github.gitAuthentication': false,
@@ -99,7 +103,7 @@ function _projectSlug() {
  * Build the content of .devcontainer/post-create.sh.
  * Each step is a separate line with a comment explaining why it exists.
  */
-function _buildPostCreateScript({ cliInstall, fixOwnership, rtkInstall, rtkInit, caveman, subagents, credCleanup }) {
+function _buildPostCreateScript({ cliInstall, fixOwnership, rtkInstall, rtkInit, caveman, subagents, playwrightMcp, credCleanup }) {
   const sections = [
     [
       '#!/usr/bin/env bash',
@@ -146,6 +150,13 @@ function _buildPostCreateScript({ cliInstall, fixOwnership, rtkInstall, rtkInit,
     ]);
   }
 
+  if (playwrightMcp) {
+    sections.push([
+      '# Register Playwright MCP server with Claude Code (guarded so a rebuilt volume skips re-registration)',
+      playwrightMcp,
+    ]);
+  }
+
   if (credCleanup) {
     sections.push([
       '# Remove the VS Code credential helper injected at container build time',
@@ -188,8 +199,9 @@ function _buildPostStartScript() {
  * @param {string|null} _tokenPath   - Unused; kept for backward compatibility.
  * @param {string}  cliName          - The AI CLI selected by the user (e.g. 'claude').
  * @param {object}  [tools]          - Optional tool opt-ins.
- * @param {boolean} [tools.caveman]  - Install the Caveman debugging plugin.
- * @param {boolean} [tools.subagents] - Clone the awesome-claude-code-subagents list.
+ * @param {boolean} [tools.caveman]       - Install the Caveman debugging plugin.
+ * @param {boolean} [tools.subagents]     - Clone the awesome-claude-code-subagents list.
+ * @param {boolean} [tools.playwrightMcp] - Register the Playwright MCP server with Claude Code.
  */
 export function writeDevContainer(config, templateName, setupGitHub = false, _tokenPath = null, _debug = false, cliName = 'claude', tools = {}) {
   const devcontainerDir = path.resolve(process.cwd(), '.devcontainer');
@@ -269,6 +281,7 @@ export function writeDevContainer(config, templateName, setupGitHub = false, _to
     rtkInit: RTK_INIT_BY_CLI[cliName] ?? RTK_INIT_BY_CLI.claude,
     caveman: (tools.caveman && cliName === 'claude') ? CAVEMAN_INSTALL_CLAUDE : null,
     subagents: (tools.subagents && cliName === 'claude') ? SUBAGENTS_CLONE : null,
+    playwrightMcp: (tools.playwrightMcp && cliName === 'claude') ? PLAYWRIGHT_MCP_INSTALL : null,
     credCleanup: useGitHub ? 'git config --global --unset-all credential.helper || true' : null,
   });
 
