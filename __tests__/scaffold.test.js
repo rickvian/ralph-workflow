@@ -119,10 +119,19 @@ describe("scaffoldRalph", () => {
       const prompt = fs.readFileSync(promptPath, "utf-8");
       const usageGuide = fs.readFileSync(usageGuidePath, "utf-8");
 
+      expect(content).toContain("MAX_ITERATIONS=${1:-10}");
       expect(content).toContain(
-        "| codex exec --dangerously-bypass-approvals-and-sandbox - 2>&1) || true",
+        "| codex exec --dangerously-bypass-approvals-and-sandbox - 2>&1) || CODEX_STATUS=$?",
       );
-      expect(content).toContain('grep -q "<promise>COMPLETE</promise>"');
+      expect(content).toContain('COMPLETION_TAG="<promise>COMPLETE</promise>"');
+      expect(content).toContain(
+        'grep -Eiq "usage limit|purchase more credits"',
+      );
+      expect(content).toContain('printf \'%s\\n\' "$OUTPUT"');
+      expect(content).toContain('if [ "$LAST_LINE" = "$COMPLETION_TAG" ]; then');
+      expect(content).toContain(
+        'echo "❌ Codex usage limit reached; stopping Ralph"',
+      );
       expect(content).not.toContain("AGENT_CMD=");
       expect(content).not.toContain("codex --quiet --yes");
       expect(content).not.toContain("tee /dev/stderr");
@@ -135,7 +144,7 @@ describe("scaffoldRalph", () => {
       );
       expect(usageGuide).toContain("prompts Codex");
       expect(usageGuide).toContain(
-        "Codex template uses this quiet runner pattern",
+        "Codex template uses this runner pattern",
       );
     } finally {
       process.chdir(originalCwd);

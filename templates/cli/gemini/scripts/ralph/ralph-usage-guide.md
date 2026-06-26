@@ -91,26 +91,28 @@ Instructions for each iteration:
 6. Run typecheck and tests
 7. Update AGENTS.md files with learnings
 8. Update prd.yaml: `passes: true`
-9. Append learnings to progress.txt
+9. Append important learnings to progress.txt only if any were discovered
 10. Commit everything together in ONE commit: `feat: [ID] - [Title]`
     (stage implementation files + prd.yaml + progress.txt in the same commit)
 
 ## Progress Format
 
-APPEND to progress.txt:
+APPEND to progress.txt only when the story produced durable knowledge worth
+carrying into future iterations. Do not log routine implementation steps,
+file lists, test commands, or obvious facts.
 
 ## [Date] - [Story ID]
-- What was implemented
-- Files changed
 - **Learnings:**
-  - Patterns discovered
-  - Gotchas encountered
+  - Root causes discovered after debugging or a long resolution process
+  - Non-obvious project conventions, constraints, or integration behavior
+  - Reusable fixes, gotchas, or commands that would prevent future rework
+  - Keep each learning specific, actionable, and tied to this story
 ---
 
 ## Codebase Patterns
 
-Add reusable patterns to the TOP
-of progress.txt:
+Add reusable patterns to the TOP of progress.txt only when they would change
+how a future agent implements or debugs similar work:
 
 ## Codebase Patterns
 - Migrations: Use IF NOT EXISTS

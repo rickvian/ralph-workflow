@@ -32,7 +32,7 @@ scripts/ralph/
 
 ## ralph.sh
 
-The Codex template uses this quiet runner pattern:
+The Codex template uses this runner pattern:
 
 ```bash
 #!/bin/bash
@@ -45,15 +45,36 @@ SCRIPT_DIR="$(cd "$(dirname \
 echo "🚀 Starting Ralph"
 echo "⚠️ Ralph can be very token intensive, ensure you have credit limiter!"
 
+COMPLETION_TAG="<promise>COMPLETE</promise>"
+
 for i in $(seq 1 $MAX_ITERATIONS); do
   echo "═══ Iteration $i ═══"
 
+  CODEX_STATUS=0
   OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" \
-    | codex exec --dangerously-bypass-approvals-and-sandbox - 2>&1) || true
+    | codex exec --dangerously-bypass-approvals-and-sandbox - 2>&1) || CODEX_STATUS=$?
 
-  if printf '%s' "$OUTPUT" | tr -d '\r' | grep -q "<promise>COMPLETE</promise>"; then
+  printf '%s\n' "$OUTPUT"
+
+  if printf '%s\n' "$OUTPUT" | grep -Eiq "usage limit|purchase more credits"; then
+    echo "❌ Codex usage limit reached; stopping Ralph"
+    exit 2
+  fi
+
+  LAST_LINE=$(printf '%s\n' "$OUTPUT" \
+    | tr -d '\r' \
+    | sed '/^[[:space:]]*$/d' \
+    | tail -n 1 \
+    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+
+  if [ "$LAST_LINE" = "$COMPLETION_TAG" ]; then
     echo "✅ Done!"
     exit 0
+  fi
+
+  if [ "$CODEX_STATUS" -ne 0 ]; then
+    echo "❌ Codex exited with status $CODEX_STATUS; stopping Ralph"
+    exit "$CODEX_STATUS"
   fi
 
   sleep 2
@@ -83,24 +104,26 @@ local Ralph run-state files:
 6. Run typecheck and tests
 7. Update AGENTS.md files with learnings
 8. Update prd.yaml: `passes: true`
-9. Append learnings to progress.txt
+9. Append important learnings to progress.txt only if any were discovered
 
 ## Progress Format
 
-APPEND to progress.txt:
+APPEND to progress.txt only when the story produced durable knowledge worth
+carrying into future iterations. Do not log routine implementation steps,
+file lists, test commands, or obvious facts.
 
 ## [Date] - [Story ID]
-- What was implemented
-- Files changed
 - **Learnings:**
-  - Patterns discovered
-  - Gotchas encountered
+  - Root causes discovered after debugging or a long resolution process
+  - Non-obvious project conventions, constraints, or integration behavior
+  - Reusable fixes, gotchas, or commands that would prevent future rework
+  - Keep each learning specific, actionable, and tied to this story
 ---
 
 ## Codebase Patterns
 
-Add reusable patterns to the TOP
-of progress.txt:
+Add reusable patterns to the TOP of progress.txt only when they would change
+how a future agent implements or debugs similar work:
 
 ## Codebase Patterns
 - Migrations: Use IF NOT EXISTS
