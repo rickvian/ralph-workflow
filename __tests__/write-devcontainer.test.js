@@ -208,6 +208,25 @@ describe('writeDevContainer', () => {
     }
   });
 
+  it('registers Playwright MCP only when opted in and cliName is claude', () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude', { playwrightMcp: true });
+      expect(readGeneratedScript('post-create.sh')).toContain('claude mcp add playwright');
+      expect(readGeneratedScript('post-create.sh')).toContain('@playwright/mcp');
+
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'claude');
+      expect(readGeneratedScript('post-create.sh')).not.toContain('@playwright/mcp');
+
+      writeDevContainer(BASE_CONFIG, 'Node.js', false, null, false, 'gemini', { playwrightMcp: true });
+      expect(readGeneratedScript('post-create.sh')).not.toContain('@playwright/mcp');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
   it('writes remoteUser matching the template base image (Node.js → node)', () => {
     const originalCwd = process.cwd();
     try {

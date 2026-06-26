@@ -1,6 +1,6 @@
 {
   "name": "ralph-workflow",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "scripts to get you started using Ralph workflow",
   "keywords": [
     "ralph"
@@ -14,7 +14,10 @@
     "url": "git+https://github.com/rickvian/ralph-workflow.git"
   },
   "license": "MIT",
-  "author": "Rickvian",
+  "author": {
+    "name": "Rickvian Aldi",
+    "url": "https://rickvianaldi.com"
+  },
   "type": "module",
   "main": "index.js",
   "bin": {

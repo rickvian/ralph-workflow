@@ -12,7 +12,7 @@ If you've contributed to this project, we'd love to have you listed here! Simply
 
 ## Core Contributors
 
-- [@rickvian](https://github.com/rickvian) - Creator and maintainer of Ralph Workflow
+- [Rickvian Aldi](https://rickvianaldi.com) ([@rickvian](https://github.com/rickvian))
 
 ## Contributors
 

@@ -16,6 +16,10 @@ import { writeRalphSh } from '../lib/generate-ralph-sh.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const { version: RALPH_VERSION } = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8')
+);
+
 /** Absolute path to the bundled templates/scripts directory (two levels up from commands/). */
 const SOURCE_DIR = path.resolve(__dirname, '../../templates/scripts');
 
@@ -65,6 +69,10 @@ export async function scaffoldRalph(cliName = 'claude') {
 
     // Make ralph.sh executable
     fs.chmodSync(ralphShPath, 0o755);
+
+    // Record the scaffolding version so users can tell which release was used
+    const versionFilePath = path.join(targetRalphDir, '.ralph-version');
+    fs.writeFileSync(versionFilePath, 'ralph-workflow@' + RALPH_VERSION + '\n', 'utf-8');
 
     console.log("'scripts' directory has been created");
     console.log('\nYou can now use the Ralph scripts in your workflow.');

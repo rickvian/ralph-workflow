@@ -1,5 +1,6 @@
 {
-  "name": "Node.js",
+  "name": "ralph-workflow",
+  "runArgs": ["--name", "${localWorkspaceFolderBasename}-dev"],
   "image": "mcr.microsoft.com/devcontainers/javascript-node:24",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "remoteEnv": {
