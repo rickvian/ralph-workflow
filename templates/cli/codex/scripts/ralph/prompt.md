@@ -26,11 +26,7 @@
 7. Update AGENTS.md files with learnings
 8. Update prd.yaml: `passes: true`
 9. Append learnings to progress.txt
-10. Commit implementation files in ONE commit: `feat: [ID] - [Title]`
-    Do not stage or commit `scripts/ralph/prd.yaml`,
-    `scripts/ralph/progress.txt`, `scripts/ralph/prompt.md`,
-    or ignored `scripts/ralph/` files. These are local Ralph
-    run state. Never use `git add -f` unless the user explicitly asks.
+10. Commit everything together in ONE commit with format: `[commit type]: [ID] - [Title]` e.g `feat: US-123 - create submit form` (stage implementation files + prd.yaml + progress.txt in the same commit)
 
 ## Progress Format
 

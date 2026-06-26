@@ -26,8 +26,8 @@
 7. Update AGENTS.md files with learnings
 8. Update prd.yaml: `passes: true`
 9. Append learnings to progress.txt
-10. Commit everything together in ONE commit: `feat: [ID] - [Title]`
-    (stage implementation files + prd.yaml + progress.txt in the same commit)
+10. Commit everything together in ONE commit with format: `[commit type]: [ID] - [Title]` e.g `feat: US-123 - create submit form` (stage implementation files + prd.yaml + progress.txt in the same commit)
+
 
 ## Progress Format
 

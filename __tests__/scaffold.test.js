@@ -160,13 +160,27 @@ describe('scaffoldRalph', () => {
     }
   });
 
-  it('should create .ralph-version file with package version', async () => {
+  it('should document the exact ralph.sh template in each CLI usage guide', () => {
+    const rootDir = path.resolve(__dirname, '..');
+
+    for (const cliName of Object.keys(CLI_MAP)) {
+      const templateDir = path.join(rootDir, 'templates', 'cli', cliName, 'scripts', 'ralph');
+      const ralphSh = fs.readFileSync(path.join(templateDir, 'ralph.sh'), 'utf-8').trim();
+      const usageGuide = fs.readFileSync(path.join(templateDir, 'ralph-usage-guide.md'), 'utf-8');
+      const bashBlock = usageGuide.match(/```bash\n([\s\S]*?)\n```/);
+
+      expect(bashBlock, cliName + ' usage guide should include a bash block').not.toBeNull();
+      expect(bashBlock[1].trim()).toBe(ralphSh);
+    }
+  });
+
+  it('should create .raplh-workflow-version file with package version', async () => {
     const originalCwd = process.cwd();
     try {
       process.chdir(TEST_DIR);
       await scaffoldRalph('claude');
 
-      const versionFilePath = path.join(TEST_DIR, 'scripts', 'ralph', '.ralph-version');
+      const versionFilePath = path.join(TEST_DIR, 'scripts', 'ralph', '.raplh-workflow-version');
       expect(fs.existsSync(versionFilePath)).toBe(true);
 
       const content = fs.readFileSync(versionFilePath, 'utf-8').trim();
