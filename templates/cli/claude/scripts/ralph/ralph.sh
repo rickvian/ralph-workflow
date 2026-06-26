@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname \
   "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "🚀 Starting Ralph"
+echo "⚠️ Ralph can be very token intensive, ensure you have credit limiter!"
 
 for i in $(seq 1 $MAX_ITERATIONS); do
   echo "═══ Iteration $i ═══"

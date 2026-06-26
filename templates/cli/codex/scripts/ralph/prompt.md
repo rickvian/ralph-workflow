@@ -23,10 +23,10 @@
    where `passes: false`
 5. Implement that ONE story, then STOP.
 6. Run typecheck and tests
-7. Update AGENTS.md files with learnings
+7. Update AGENTS.md files with learnings from this story only
 8. Update prd.yaml: `passes: true`
-9. Append learnings to progress.txt
-10. Commit everything together in ONE commit with format: `[commit type]: [ID] - [Title]` e.g `feat: US-123 - create submit form` (stage implementation files + prd.yaml + progress.txt in the same commit)
+9. Append current-story progress and learnings to progress.txt
+10. Commit implementation files in ONE commit with format: `[commit type]: [ID] - [Title]` e.g `feat: US-123 - create submit form`. Do not stage or commit `scripts/ralph/prd.yaml` or `scripts/ralph/progress.txt`.
 
 ## Progress Format
 
@@ -36,8 +36,9 @@ APPEND to progress.txt:
 - What was implemented
 - Files changed
 - **Learnings:**
-  - Patterns discovered
-  - Gotchas encountered
+  - Patterns discovered while implementing this story
+  - Gotchas encountered while implementing this story
+  - Do not include unrelated observations, future tasks, or learnings outside this story's scope
 ---
 
 ## prd.yaml format
@@ -58,8 +59,8 @@ userStories:
 
 ## Codebase Patterns
 
-Add reusable patterns to the TOP
-of progress.txt:
+Add only reusable patterns learned from the current story to the TOP
+of progress.txt. Do not add patterns from unrelated exploration:
 
 ## Codebase Patterns
 - Migrations: Use IF NOT EXISTS
