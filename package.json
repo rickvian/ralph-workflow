@@ -14,7 +14,10 @@
     "url": "git+https://github.com/rickvian/ralph-workflow.git"
   },
   "license": "MIT",
-  "author": "Rickvian",
+  "author": {
+    "name": "Rickvian Aldi",
+    "url": "https://rickvianaldi.com"
+  },
   "type": "module",
   "main": "index.js",
   "bin": {

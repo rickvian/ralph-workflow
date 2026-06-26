@@ -79,7 +79,7 @@ export default function Home() {
       </section>
 
       {/* Quick Start */}
-      <section className="py-16 px-4">
+      <section className="py-16 px-4 border-b border-white/10">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
             Quick Start
@@ -113,6 +113,39 @@ Reopen this folder in the Dev Container to start.`}</code>
               Full guide →
             </Link>
           </p>
+        </div>
+      </section>
+
+      {/* Contributors */}
+      <section className="py-16 px-4">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Contributors</h2>
+          <p className="text-gray-400 mb-8 max-w-xl mx-auto text-sm">
+            Built by the community. Every bug report, PR, and idea counts.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 mb-10">
+            <a
+              href="https://rickvianaldi.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 hover:border-brand-purple transition-colors text-sm"
+            >
+              <img
+                src="https://github.com/rickvian.png"
+                alt="rickvian"
+                className="w-6 h-6 rounded-full"
+              />
+              <span className="text-gray-200">Rickvian Aldi</span>
+            </a>
+          </div>
+          <a
+            href="https://github.com/rickvian/ralph-workflow/blob/main/CONTRIBUTING.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block border border-brand-purple text-brand-purple font-semibold px-6 py-3 rounded hover:bg-brand-purple hover:text-brand-bg transition-colors"
+          >
+            Become a contributor ↗
+          </a>
         </div>
       </section>
     </>
