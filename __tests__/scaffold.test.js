@@ -20,6 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 import os from 'os';
+import CLI_MAP from '../bin/lib/cli-map.js';
 
 const TEST_DIR = path.join(os.tmpdir(), '.test-scaffold-vitest');
 
@@ -96,6 +97,66 @@ describe('scaffoldRalph', () => {
       expect(content.startsWith('#!/bin/bash')).toBe(true);
     } finally {
       process.chdir(originalCwd);
+    }
+  });
+
+  it('should overlay the selected CLI ralph.sh template', async () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      await scaffoldRalph('codex');
+
+      const ralphShPath = path.join(TEST_DIR, 'scripts', 'ralph', 'ralph.sh');
+      const promptPath = path.join(TEST_DIR, 'scripts', 'ralph', 'prompt.md');
+      const usageGuidePath = path.join(TEST_DIR, 'scripts', 'ralph', 'ralph-usage-guide.md');
+      const content = fs.readFileSync(ralphShPath, 'utf-8');
+      const prompt = fs.readFileSync(promptPath, 'utf-8');
+      const usageGuide = fs.readFileSync(usageGuidePath, 'utf-8');
+
+      expect(content).toContain('| codex exec --dangerously-bypass-approvals-and-sandbox - 2>&1) || true');
+      expect(content).toContain('if [ "$(printf \'%s\' "$OUTPUT" | tr -d \'\\r\')" = "<promise>COMPLETE</promise>" ]; then');
+      expect(content).not.toContain('AGENT_CMD=');
+      expect(content).not.toContain('codex --quiet --yes');
+      expect(content).not.toContain('tee /dev/stderr');
+      expect(prompt).toContain('implementation files committed');
+      expect(prompt).toContain('Do not stage or commit `scripts/ralph/prd.yaml`');
+      expect(prompt).not.toContain('stage implementation files + prd.yaml + progress.txt');
+      expect(usageGuide).toContain('prompts Codex');
+      expect(usageGuide).toContain('Codex template uses this quiet runner pattern');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('should keep non-Codex CLI scripts as predefined templates', async () => {
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(TEST_DIR);
+      await scaffoldRalph('gemini');
+
+      const ralphShPath = path.join(TEST_DIR, 'scripts', 'ralph', 'ralph.sh');
+      const content = fs.readFileSync(ralphShPath, 'utf-8');
+
+      expect(content).toContain('gemini --yolo');
+      expect(content).toContain('tee /dev/stderr');
+      expect(content).not.toContain('AGENT_CMD=');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('should have ralph.sh, prompt.md, and usage guide templates for every supported CLI', () => {
+    const rootDir = path.resolve(__dirname, '..');
+
+    for (const cliName of Object.keys(CLI_MAP)) {
+      const templateDir = path.join(rootDir, 'templates', 'cli', cliName, 'scripts', 'ralph');
+      const ralphShPath = path.join(templateDir, 'ralph.sh');
+      const promptPath = path.join(templateDir, 'prompt.md');
+      const usageGuidePath = path.join(templateDir, 'ralph-usage-guide.md');
+
+      expect(fs.existsSync(ralphShPath)).toBe(true);
+      expect(fs.existsSync(promptPath)).toBe(true);
+      expect(fs.existsSync(usageGuidePath)).toBe(true);
     }
   });
 
