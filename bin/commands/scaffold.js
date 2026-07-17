@@ -7,9 +7,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
 import { fileURLToPath } from 'url';
 import CLI_MAP from '../lib/cli-map.js';
+import { confirm, info, spinner } from '../lib/ui.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,18 +38,18 @@ export async function scaffoldRalph(cliName = 'claude') {
 
   const existingDirs = [targetScriptsDir, targetRalphDir].filter(d => fs.existsSync(d));
   if (existingDirs.length > 0) {
-    console.warn('\n  ⚠ Existing Ralph files will be overwritten:');
-    existingDirs.forEach(d => console.warn('  ' + d));
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    const answer = await new Promise(resolve => rl.question('\n  Proceed and overwrite? [y/N]: ', resolve));
-    rl.close();
-    if (answer.trim().toLowerCase() !== 'y') {
-      console.log('  Setup cancelled. No files were changed.');
+    const shouldOverwrite = await confirm(
+      `Overwrite existing Ralph files in ${existingDirs.map(dir => path.basename(dir)).join(' and ')}?`,
+      false
+    );
+    if (!shouldOverwrite) {
+      info('Existing Ralph files were left unchanged.');
       return;
     }
   }
 
-  console.log('\n  Creating Ralph workflow files...');
+  const progress = spinner();
+  progress.start('Creating Ralph workflow files');
 
   if (!fs.existsSync(SOURCE_DIR)) {
     console.error('Error: template directory not found at ' + SOURCE_DIR);
@@ -88,8 +88,9 @@ export async function scaffoldRalph(cliName = 'claude') {
     const versionFilePath = path.join(targetRalphDir, '.raplh-workflow-version');
     fs.writeFileSync(versionFilePath, 'ralph-workflow@' + RALPH_VERSION + '\n', 'utf-8');
 
-    console.log("  ✓ Created 'scripts' directory");
+    progress.stop("Created 'scripts' directory");
   } catch (err) {
+    progress.stop('Could not create Ralph workflow files');
     console.error('Error scaffolding files:', err);
     process.exit(1);
   }
