@@ -14,7 +14,10 @@ import { TEMPLATES } from '../lib/devcontainer-templates.js';
  * @returns {Promise<object>} The chosen template object.
  */
 export async function selectTemplate() {
-  console.log('\nSelect a Dev Container template (use arrow keys, Enter to confirm):\n');
-  const idx = await selectMenu(TEMPLATES.map(t => t.label));
+  console.log('\n  Choose the environment your agent will work inside.');
+  console.log('  Use ↑/↓ and Enter to select.\n');
+  const idx = await selectMenu(TEMPLATES.map(t => ({
+    label: `${t.label} — ${t.description}`,
+  })));
   return TEMPLATES[idx];
 }

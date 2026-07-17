@@ -38,18 +38,18 @@ export async function scaffoldRalph(cliName = 'claude') {
 
   const existingDirs = [targetScriptsDir, targetRalphDir].filter(d => fs.existsSync(d));
   if (existingDirs.length > 0) {
-    console.warn('\nWarning: the following director' + (existingDirs.length > 1 ? 'ies' : 'y') + ' already exist and will be overwritten:');
+    console.warn('\n  ⚠ Existing Ralph files will be overwritten:');
     existingDirs.forEach(d => console.warn('  ' + d));
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    const answer = await new Promise(resolve => rl.question('\nProceed and overwrite? [y/N]: ', resolve));
+    const answer = await new Promise(resolve => rl.question('\n  Proceed and overwrite? [y/N]: ', resolve));
     rl.close();
     if (answer.trim().toLowerCase() !== 'y') {
-      console.log('Scaffold cancelled. No files were changed.');
+      console.log('  Setup cancelled. No files were changed.');
       return;
     }
   }
 
-  console.log('Scaffolding scripts directory...');
+  console.log('\n  Creating Ralph workflow files...');
 
   if (!fs.existsSync(SOURCE_DIR)) {
     console.error('Error: template directory not found at ' + SOURCE_DIR);
@@ -88,9 +88,7 @@ export async function scaffoldRalph(cliName = 'claude') {
     const versionFilePath = path.join(targetRalphDir, '.raplh-workflow-version');
     fs.writeFileSync(versionFilePath, 'ralph-workflow@' + RALPH_VERSION + '\n', 'utf-8');
 
-    console.log("'scripts' directory has been created");
-    console.log('\nYou can now use the Ralph scripts in your workflow.');
-    console.log('Read scripts/ralph/ralph-usage-guide.md for more info.');
+    console.log("  ✓ Created 'scripts' directory");
   } catch (err) {
     console.error('Error scaffolding files:', err);
     process.exit(1);
