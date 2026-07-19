@@ -1,18 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const mockQuestion = vi.fn();
-const mockClose = vi.fn();
-vi.mock("readline", () => ({
-  default: {
-    createInterface: vi.fn(() => ({
-      question: mockQuestion,
-      close: mockClose,
-    })),
+const { mockConfirm, mockInfo, mockSpinner } = vi.hoisted(() => ({
+  mockConfirm: vi.fn(),
+  mockInfo: vi.fn(),
+  mockSpinner: {
+    start: vi.fn(),
+    stop: vi.fn(),
   },
+}));
+vi.mock("../bin/lib/ui.js", () => ({
+  confirm: mockConfirm,
+  info: mockInfo,
+  spinner: () => mockSpinner,
 }));
 
 import { scaffoldRalph } from "../bin/commands/scaffold.js";
@@ -28,7 +30,7 @@ const TEST_DIR = path.join(os.tmpdir(), ".test-scaffold-vitest");
 describe("scaffoldRalph", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockQuestion.mockImplementation((_prompt, cb) => cb("y"));
+    mockConfirm.mockResolvedValue(true);
     if (fs.existsSync(TEST_DIR)) {
       fs.rmSync(TEST_DIR, { recursive: true });
     }
@@ -219,7 +221,7 @@ describe("scaffoldRalph", () => {
     }
   });
 
-  it("should create .raplh-workflow-version file with package version", async () => {
+  it("should create .ralph-version file with package version", async () => {
     const originalCwd = process.cwd();
     try {
       process.chdir(TEST_DIR);
@@ -229,7 +231,7 @@ describe("scaffoldRalph", () => {
         TEST_DIR,
         "scripts",
         "ralph",
-        ".raplh-workflow-version",
+        ".ralph-version",
       );
       expect(fs.existsSync(versionFilePath)).toBe(true);
 
@@ -241,16 +243,15 @@ describe("scaffoldRalph", () => {
   });
 
   it("should warn and prompt when scripts/ already exists, then overwrite on confirm", async () => {
-    mockQuestion.mockImplementation((_prompt, cb) => cb("y"));
     const originalCwd = process.cwd();
     try {
       process.chdir(TEST_DIR);
       fs.mkdirSync(path.join(TEST_DIR, "scripts"), { recursive: true });
       await scaffoldRalph("claude");
 
-      expect(mockQuestion).toHaveBeenCalledWith(
-        expect.stringContaining("Proceed and overwrite?"),
-        expect.any(Function),
+      expect(mockConfirm).toHaveBeenCalledWith(
+        "Overwrite existing Ralph files in scripts?",
+        false,
       );
       expect(
         fs.existsSync(path.join(TEST_DIR, "scripts", "ralph", "ralph.sh")),
@@ -261,7 +262,7 @@ describe("scaffoldRalph", () => {
   });
 
   it("should abort scaffold when user declines overwrite prompt", async () => {
-    mockQuestion.mockImplementation((_prompt, cb) => cb("n"));
+    mockConfirm.mockResolvedValue(false);
     const originalCwd = process.cwd();
     try {
       process.chdir(TEST_DIR);
@@ -273,6 +274,10 @@ describe("scaffoldRalph", () => {
 
       await scaffoldRalph("claude");
 
+      expect(mockConfirm).toHaveBeenCalledWith(
+        "Overwrite existing Ralph files in scripts and ralph?",
+        false,
+      );
       expect(fs.existsSync(sentinelPath)).toBe(true);
       expect(
         fs.existsSync(path.join(TEST_DIR, "scripts", "ralph", "ralph.sh")),
