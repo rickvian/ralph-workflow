@@ -85,7 +85,7 @@ export async function scaffoldRalph(cliName = 'claude') {
     fs.chmodSync(ralphShPath, 0o755);
 
     // Record the scaffolding version so users can tell which release was used
-    const versionFilePath = path.join(targetRalphDir, '.ralph-version');
+    const versionFilePath = path.join(targetRalphDir, '.ralph-workflow-version');
     fs.writeFileSync(versionFilePath, 'ralph-workflow@' + RALPH_VERSION + '\n', 'utf-8');
 
     progress.stop("Created 'scripts' directory");

@@ -221,7 +221,7 @@ describe("scaffoldRalph", () => {
     }
   });
 
-  it("should create .ralph-version file with package version", async () => {
+  it("should create .ralph-workflow-version file with package version", async () => {
     const originalCwd = process.cwd();
     try {
       process.chdir(TEST_DIR);
@@ -231,7 +231,7 @@ describe("scaffoldRalph", () => {
         TEST_DIR,
         "scripts",
         "ralph",
-        ".ralph-version",
+        ".ralph-workflow-version",
       );
       expect(fs.existsSync(versionFilePath)).toBe(true);
 

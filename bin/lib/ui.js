@@ -21,7 +21,7 @@ const RALPH_WORDMARK = [
 
 function unwrap(value) {
   if (p.isCancel(value)) {
-    p.cancel('Setup cancelled. No files were changed.');
+    p.cancel('Setup cancelled.');
     process.exit(0);
   }
   return value;
