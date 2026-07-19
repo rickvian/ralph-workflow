@@ -1,71 +1,67 @@
 /**
- * Terminal UI helpers — readline prompt and interactive arrow-key menu.
+ * Shared interactive UI, powered by Clack.
+ *
+ * Clack gives every prompt the connected timeline, coloured status glyphs,
+ * cancellation handling, and accessible non-TTY fallback used by skills.sh.
  */
 
-import readline from 'readline';
+import * as p from '@clack/prompts';
 
-export const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+const isTTY = Boolean(process.stdout.isTTY);
+const paint = (code, text) => isTTY ? `\x1b[${code}m${text}\x1b[0m` : text;
 
-/**
- * Prompt the user for a single line of input.
- * @param {string} question - Text displayed before the cursor.
- * @returns {Promise<string>}
- */
-export function ask(question) {
-  return new Promise(resolve => rl.question(question, resolve));
+const RALPH_WORDMARK = [
+  '██████╗  █████╗ ██╗     ██████╗ ██╗  ██╗',
+  '██╔══██╗██╔══██╗██║     ██╔══██╗██║  ██║',
+  '██████╔╝███████║██║     ██████╔╝███████║',
+  '██╔══██╗██╔══██║██║     ██╔═══╝ ██╔══██║',
+  '██║  ██║██║  ██║███████╗██║     ██║  ██║',
+  '╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝',
+].join('\n');
+
+function unwrap(value) {
+  if (p.isCancel(value)) {
+    p.cancel('Setup cancelled.');
+    process.exit(0);
+  }
+  return value;
 }
 
-/**
- * Display an interactive arrow-key menu and resolve with the chosen index.
- * Closes the shared `rl` interface before taking over stdin raw mode,
- * then restores normal stdin state when the user presses Enter.
- * @param {string[]} options - Menu items to display.
- * @returns {Promise<number>} Zero-based index of the selected option.
- */
-export function selectMenu(options) {
-  return new Promise((resolve) => {
-    let selected = 0;
+export function intro(version) {
+  console.log('');
+  console.log(paint('38;5;141', RALPH_WORDMARK));
+  console.log('');
+  p.intro(paint('48;5;135;38;5;231;1', ` ralph-workflow v${version} `));
+}
 
-    // Close readline — it holds stdin and blocks raw keypress events.
-    rl.close();
+export function outro(message) {
+  p.outro(message);
+}
 
-    readline.emitKeypressEvents(process.stdin);
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
+export function info(message) {
+  p.log.info(message);
+}
 
-    function render() {
-      options.forEach((opt, i) => {
-        const cursor = i === selected ? '\x1b[36m>\x1b[0m ' : '  ';
-        const label = i === selected ? `\x1b[1;34m${opt}\x1b[0m` : opt;
-        process.stdout.write(`\r${cursor}${label}\x1b[K\n`);
-      });
-      process.stdout.write(`\x1b[${options.length}A`);
-    }
+export function warn(message) {
+  p.log.warn(message);
+}
 
-    render();
+export function note(message, title) {
+  p.note(message, title);
+}
 
-    function onKeypress(str, key) {
-      if (!key) return;
+export async function select(message, options) {
+  return unwrap(await p.select({ message, options }));
+}
 
-      if (key.name === 'up') {
-        selected = (selected - 1 + options.length) % options.length;
-        render();
-      } else if (key.name === 'down') {
-        selected = (selected + 1) % options.length;
-        render();
-      } else if (key.name === 'return') {
-        process.stdin.removeListener('keypress', onKeypress);
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        process.stdout.write(`\x1b[${options.length}B\n`);
-        resolve(selected);
-      } else if (key.ctrl && key.name === 'c') {
-        process.stdin.setRawMode(false);
-        process.stdout.write('\n');
-        process.exit(0);
-      }
-    }
+export async function confirm(message, initialValue = true) {
+  return unwrap(await p.confirm({ message, initialValue }));
+}
 
-    process.stdin.on('keypress', onKeypress);
-  });
+export async function password(message) {
+  return unwrap(await p.password({ message, validate: value => value.trim() ? undefined : 'A token is required.' }));
+}
+
+export function spinner() {
+  return p.spinner();
 }

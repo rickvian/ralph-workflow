@@ -17,7 +17,7 @@
  */
 
 import { createRequire } from 'module';
-import { rl, ask } from './lib/ui.js';
+import { intro, outro, info, note, confirm, select } from './lib/ui.js';
 import { selectTemplate } from './commands/devcontainer.js';
 import { setupGitHubAccess } from './commands/github-access.js';
 import { writeDevContainer } from './lib/write-devcontainer.js';
@@ -29,102 +29,52 @@ const { version } = require('../package.json');
 
 const DEBUG = process.argv.includes('--check-isolation');
 
-// Interpolates two RGB colors across the characters of a string using ANSI true-color codes.
-function gradient(text, [r1, g1, b1], [r2, g2, b2]) {
-  const len = text.length;
-  return text.split('').map((ch, i) => {
-    const t = len > 1 ? i / (len - 1) : 0;
-    const r = Math.round(r1 + (r2 - r1) * t);
-    const g = Math.round(g1 + (g2 - g1) * t);
-    const b = Math.round(b1 + (b2 - b1) * t);
-    return `\x1b[38;2;${r};${g};${b}m${ch}`;
-  }).join('') + '\x1b[0m';
-}
-
-function printBanner() {
-  const name = 'ralph-workflow';
-  const ver  = `v${version}`;
-  const sub  = 'autonomous AI coding loop';
-
-  // Use plain strings to measure visible widths (ANSI codes are zero-width)
-  const plain1 = `  ✦ ${name}  ${ver}  `;
-  const plain2 = `  ${sub}  `;
-  const w   = Math.max(plain1.length, plain2.length);
-  const bar = '─'.repeat(w);
-
-  const gName = gradient(name, [200, 160, 255], [100, 40, 180]);
-  const gVer  = gradient(ver,  [180, 130, 240], [120, 60, 200]);
-  const dim   = '\x1b[2m';
-  const reset = '\x1b[0m';
-
-  // Build rows with ANSI content, padded to exact visible width
-  const row1 = `  ✦ ${gName}  ${gVer}  ` + ' '.repeat(w - plain1.length);
-  const row2 = plain2 + ' '.repeat(w - plain2.length);
-
-  console.log('');
-  console.log(`  ${dim}╭${bar}╮${reset}`);
-  console.log(`  ${dim}│${reset}${row1}${dim}│${reset}`);
-  console.log(`  ${dim}│${reset}${row2}${dim}│${reset}`);
-  console.log(`  ${dim}╰${bar}╯${reset}`);
-  console.log('');
-}
-
 async function main() {
-  printBanner();
+  intro(version);
 
   const cliKeys = Object.keys(CLI_MAP);
-  const cliList = cliKeys.map(keyItem => keyItem).join(', ');
+  const cliName = await select('Choose your AI coding CLI', cliKeys.map(name => ({
+    value: name,
+    label: CLI_MAP[name].label ?? name,
+    hint: name === 'claude' ? 'Recommended default' : undefined,
+  })));
 
-  console.log('\nSupported CLIs: ' + cliList);
-  const cliAnswer = await ask('Which AI coding CLI you want to use for Ralph? (empty for default "claude"): ');
-  const cliName = cliAnswer.trim().toLowerCase() || 'claude';
+  note(
+    'Ralph runs with elevated permissions and can change files without asking. A Dev Container keeps its access isolated from the rest of your machine.',
+    'Workspace isolation'
+  );
+  const wantsIsolation = await confirm('Set up a VS Code Dev Container?', true);
 
-  if (!CLI_MAP[cliName]) {
-    console.error('Unknown CLI: ' + cliName + '. Supported: ' + cliKeys.join(', '));
-    rl.close();
-    process.exit(1);
-  }
-
-  console.log('\n   Ralph operates with elevated permissions and proceeds without confirmations (--dangerously-skip-permissions).');
-  console.log('   Risks of hallucinations and prompt injections could result in accidental file deletion, exposure of SSH keys/credentials');
-  console.log('   and corruption of other local projects. Isolation is recommended\n');
-
-  const isolateAnswer = await ask('Set up VS Code Dev Container for isolation? [Y/n]: ');
-  const wantsIsolation = isolateAnswer.trim().toLowerCase() !== 'n';
-
-  const githubAnswer = await ask('Set up GitHub repository with isolated PAT token? [Y/n]: ');
-  const wantsGitHub = githubAnswer.trim().toLowerCase() !== 'n';
+  note(
+    'Creates a private repository, then guides you through creating a project-scoped GitHub token.',
+    'GitHub isolation'
+  );
+  const wantsGitHub = await confirm('Set up GitHub with an isolated token?', true);
 
   // Caveman and the awesome-subagents list are Claude-specific — skip their
   // prompts for other CLIs so the flow stays short.
   let wantsCaveman = false;
   let wantsSubagents = false;
   if (cliName === 'claude') {
-    const cavemanAnswer = await ask('Install Caveman debugging plugin? [y/N]: ');
-    wantsCaveman = cavemanAnswer.trim().toLowerCase() === 'y';
-
-    const subagentsAnswer = await ask('Install curated awesome-claude-code-subagents collection? [y/N]: ');
-    wantsSubagents = subagentsAnswer.trim().toLowerCase() === 'y';
+    wantsCaveman = await confirm('Install the Caveman debugging plugin?', false);
+    wantsSubagents = await confirm('Install the curated subagents collection?', false);
   }
 
   let wantsPlaywrightMcp = false;
   if (cliName === 'claude') {
-    const playwrightAnswer = await ask('Install Playwright MCP server? [y/N]: ');
-    wantsPlaywrightMcp = playwrightAnswer.trim().toLowerCase() === 'y';
+    wantsPlaywrightMcp = await confirm('Install the Playwright MCP server?', false);
   }
 
   // Template selection uses raw keypress mode and closes rl — must come after all ask() calls.
   let template = null;
   if (wantsIsolation) {
     template = await selectTemplate();
-  } else {
-    rl.close();
   }
 
   const tools = { caveman: wantsCaveman, subagents: wantsSubagents, playwrightMcp: wantsPlaywrightMcp };
 
   if (!wantsIsolation && !wantsGitHub) {
-    console.log('\n  ⚠️  Proceeding without isolation. Be careful.\n');
+    info('Proceeding without isolation. Work only in a project you can safely change.');
   } else if (wantsGitHub) {
     await setupGitHubAccess();
     if (wantsIsolation) {
@@ -135,6 +85,7 @@ async function main() {
   }
 
   await scaffoldRalph(cliName);
+  outro(`Ralph workflow is ready — ${cliName}${wantsIsolation ? ` in ${template.name}` : ''}.\nRead scripts/ralph/ralph-usage-guide.md to get started.`);
 }
 
 main();

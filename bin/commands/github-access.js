@@ -13,8 +13,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
 import { execSync } from 'child_process';
+import { confirm, info, note, password, spinner } from '../lib/ui.js';
 
 /**
  * Git repository, GitHub repo creation, and PAT token setup flow.
@@ -22,21 +22,17 @@ import { execSync } from 'child_process';
  */
 export async function setupGitHubAccess() {
   const projectName = path.basename(process.cwd());
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const ask = (q) => new Promise(resolve => rl.question(q, resolve));
-
-  console.log(`\nSetting up GitHub isolation for project: ${projectName}`);
+  info(`Setting up GitHub isolation for ${projectName}`);
 
   _ensureGitRepo();
   _ensureInitialCommit(projectName);
 
-  const userName = await _getGitHubUsername(ask);
+  const userName = await _getGitHubUsername();
 
-  console.log('Note: a private GitHub repository will be created automatically using the gh CLI.');
-  await _createGitHubRepo(projectName, userName, ask);
+  note('A private GitHub repository will be created automatically with the gh CLI.', 'GitHub repository');
+  await _createGitHubRepo(projectName, userName);
 
-  const token = await _promptForPAT(ask, projectName, userName);
-  rl.close();
+  const token = await _promptForPAT(projectName, userName);
 
   _storeToken(token);
 }
@@ -46,7 +42,7 @@ function _ensureGitRepo() {
   try {
     execSync('git rev-parse --git-dir', { stdio: 'pipe' });
   } catch {
-    console.log('Initializing git repository...');
+    info('Initializing git repository');
     execSync('git init -b main 2>/dev/null || git init 2>/dev/null', { stdio: 'inherit' });
   }
 }
@@ -78,7 +74,7 @@ function _ensureInitialCommit(projectName) {
     }
   }
 
-  console.log('Creating initial commit so the new GitHub repo has something to push...');
+  info('Creating an initial commit so the new repository has something to push');
   execSync('git add -A', { stdio: 'inherit' });
   execSync('git commit -m "chore: initial commit"', { stdio: 'inherit' });
 }
@@ -86,19 +82,16 @@ function _ensureInitialCommit(projectName) {
 /**
  * Resolve the authenticated GitHub username via the gh CLI.
  * Retries on failure until the user succeeds or declines.
- * @param {function} ask
  * @returns {Promise<string>}
  */
-async function _getGitHubUsername(ask) {
+async function _getGitHubUsername() {
   while (true) {
     try {
       return execSync('gh api user -q .login', { encoding: 'utf8', stdio: 'pipe' }).trim();
     } catch (err) {
       const stderr = (err.stderr || '').toString().trim();
-      console.error(`\nFailed to reach GitHub: ${stderr || 'unknown error'}`);
-      console.error('Ensure gh is authenticated (gh auth login) and you have internet access.');
-      const answer = await ask('Would you like to retry? (y/n): ');
-      if (answer.trim().toLowerCase() !== 'y') {
+      note(`Failed to reach GitHub: ${stderr || 'unknown error'}\n\nRun \`gh auth login\`, then try again.`, 'GitHub needs attention');
+      if (!await confirm('Retry GitHub connection?', false)) {
         console.error('\nCannot continue without GitHub access. Run `gh auth login` and try again.');
         process.exit(1);
       }
@@ -111,32 +104,34 @@ async function _getGitHubUsername(ask) {
  * Retries on failure until the user succeeds or declines.
  * @param {string}   projectName
  * @param {string}   userName
- * @param {function} ask
  */
-async function _createGitHubRepo(projectName, userName, ask) {
-  console.log('Creating private GitHub repository...');
+async function _createGitHubRepo(projectName, userName) {
+  const progress = spinner();
+  progress.start('Creating private GitHub repository');
   while (true) {
     try {
       execSync(
         `gh repo create "${projectName}" --private --source=. --push`,
         { stdio: 'pipe' }
       );
+      progress.stop('Private GitHub repository created');
       break;
     } catch (err) {
       const stderr = (err.stderr || '').toString();
       if (stderr.toLowerCase().includes('already exists')) {
-        console.log('Repository already exists, continuing...');
+        progress.stop('Private GitHub repository already exists');
         break;
       }
-      console.error(`\nFailed to create GitHub repository: ${stderr.trim() || 'unknown error'}`);
-      const answer = await ask('Would you like to retry? (y/n): ');
-      if (answer.trim().toLowerCase() !== 'y') {
+      progress.stop('Could not create GitHub repository');
+      note(stderr.trim() || 'Unknown error', 'GitHub repository error');
+      if (!await confirm('Retry repository creation?', false)) {
         console.error('\nCannot continue without a GitHub repository. Before re-running, check:');
         console.error('  • gh auth status  — ensure you are authenticated');
         console.error('  • The repository name is not already taken under a different account');
         console.error('  • You have permission to create repositories on this account');
         process.exit(1);
       }
+      progress.start('Creating private GitHub repository');
     }
   }
 
@@ -149,33 +144,25 @@ async function _createGitHubRepo(projectName, userName, ask) {
 
 /**
  * Print PAT creation instructions and read the token from stdin.
- * @param {function} ask
  * @param {string}   projectName
  * @param {string}   userName
  * @returns {Promise<string>} The raw token string.
  */
-async function _promptForPAT(ask, projectName, userName) {
+async function _promptForPAT(projectName, userName) {
   const patUrl =
     `https://github.com/settings/personal-access-tokens/new` +
     `?name=Ralph-${projectName}&target_name=${userName}&expires_in=1` +
     `&contents=write&pull_requests=write&issues=write&notifications=read&metadata=read`;
 
-  console.log("\n── Create Ralph's GitHub Token ───────────────────────────────────────");
-  console.log('Open this URL in your browser (name and permissions are pre-filled):');
-  console.log('');
-  console.log(patUrl);
-  console.log('');
-  console.log('IMPORTANT: Under "Repository access", select "Only select repositories"');
-  console.log(`           then choose: ${projectName}`);
-  console.log('');
-  console.log('Set an expiration, click Generate, then paste the token below.');
+  note(
+    `Under “Repository access”, choose “Only select repositories”, then select ${projectName}. Set an expiration, generate the token, and paste it below.`,
+    "Create Ralph's GitHub token"
+  );
+  // Do not put this URL inside p.note(): its box renderer hard-wraps long
+  // lines, which makes the query string awkward to copy from the terminal.
+  console.log(`\n${patUrl}\n`);
 
-  const token = await ask('Token: ');
-
-  if (!token.trim()) {
-    console.error('Error: no token provided. Aborting.');
-    process.exit(1);
-  }
+  const token = await password('Paste the GitHub token');
 
   return token.trim();
 }
@@ -202,7 +189,7 @@ function _storeToken(token) {
 
   _ensureGitignore('.ralph/');
 
-  console.log(`Token stored: ${tokenPath}`);
+  info(`GitHub token stored at ${tokenPath}`);
 }
 
 /**

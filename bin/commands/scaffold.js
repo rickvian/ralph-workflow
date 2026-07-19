@@ -1,17 +1,15 @@
 /**
  * Ralph file scaffolding command.
  *
- * Copies the bundled `templates/scripts/` directory into `<cwd>/scripts/` inside the
- * user's current working directory, then generates ralph.sh for the selected CLI.
- * This ensures all files (ralph/, and any future files added to templates/scripts/)
- * are scaffolded into the user's project.
+ * Copies the bundled `templates/scripts/` directory into `<cwd>/scripts/`, then
+ * overlays the selected CLI template from `templates/cli/<cli>/`.
  */
 
 import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
 import { fileURLToPath } from 'url';
-import { writeRalphSh } from '../lib/generate-ralph-sh.js';
+import CLI_MAP from '../lib/cli-map.js';
+import { confirm, info, spinner } from '../lib/ui.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,33 +20,43 @@ const { version: RALPH_VERSION } = JSON.parse(
 
 /** Absolute path to the bundled templates/scripts directory (two levels up from commands/). */
 const SOURCE_DIR = path.resolve(__dirname, '../../templates/scripts');
+const CLI_TEMPLATES_DIR = path.resolve(__dirname, '../../templates/cli');
 
 /**
- * Copy entire scripts directory from templates into `<cwd>/scripts/`,
- * then generate ralph.sh for the chosen CLI.
- * @param {string} [cliName='claude'] - CLI key from cli-map.js
+ * Copy common Ralph files, then overlay files for the chosen CLI.
+ * @param {string} [cliName='claude'] - CLI key from cli-map.js and templates/cli/
  */
 export async function scaffoldRalph(cliName = 'claude') {
+  if (!CLI_MAP[cliName]) {
+    const supported = Object.keys(CLI_MAP).join(', ');
+    throw new Error('Unknown CLI "' + cliName + '". Supported: ' + supported);
+  }
+
   const targetScriptsDir = path.resolve(process.cwd(), 'scripts');
   const targetRalphDir = path.join(targetScriptsDir, 'ralph');
+  const cliTemplateDir = path.join(CLI_TEMPLATES_DIR, cliName);
 
   const existingDirs = [targetScriptsDir, targetRalphDir].filter(d => fs.existsSync(d));
   if (existingDirs.length > 0) {
-    console.warn('\nWarning: the following director' + (existingDirs.length > 1 ? 'ies' : 'y') + ' already exist and will be overwritten:');
-    existingDirs.forEach(d => console.warn('  ' + d));
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    const answer = await new Promise(resolve => rl.question('\nProceed and overwrite? [y/N]: ', resolve));
-    rl.close();
-    if (answer.trim().toLowerCase() !== 'y') {
-      console.log('Scaffold cancelled. No files were changed.');
+    const shouldOverwrite = await confirm(
+      `Overwrite existing Ralph files in ${existingDirs.map(dir => path.basename(dir)).join(' and ')}?`,
+      false
+    );
+    if (!shouldOverwrite) {
+      info('Existing Ralph files were left unchanged.');
       return;
     }
   }
 
-  console.log('Scaffolding scripts directory...');
+  const progress = spinner();
+  progress.start('Creating Ralph workflow files');
 
   if (!fs.existsSync(SOURCE_DIR)) {
     console.error('Error: template directory not found at ' + SOURCE_DIR);
+    process.exit(1);
+  }
+  if (!fs.existsSync(cliTemplateDir)) {
+    console.error('Error: CLI template directory not found at ' + cliTemplateDir);
     process.exit(1);
   }
 
@@ -63,21 +71,26 @@ export async function scaffoldRalph(cliName = 'claude') {
       _copyRecursive(SOURCE_DIR, targetScriptsDir);
     }
 
-    // Generate ralph.sh with the selected CLI command
-    const ralphShPath = path.join(targetScriptsDir, 'ralph', 'ralph.sh');
-    writeRalphSh(ralphShPath, cliName);
+    try {
+      if (fs.cpSync) {
+        fs.cpSync(cliTemplateDir, process.cwd(), { recursive: true, force: true });
+      } else {
+        _copyRecursive(cliTemplateDir, process.cwd());
+      }
+    } catch {
+      _copyRecursive(cliTemplateDir, process.cwd());
+    }
 
-    // Make ralph.sh executable
+    const ralphShPath = path.join(targetScriptsDir, 'ralph', 'ralph.sh');
     fs.chmodSync(ralphShPath, 0o755);
 
     // Record the scaffolding version so users can tell which release was used
-    const versionFilePath = path.join(targetRalphDir, '.ralph-version');
+    const versionFilePath = path.join(targetRalphDir, '.ralph-workflow-version');
     fs.writeFileSync(versionFilePath, 'ralph-workflow@' + RALPH_VERSION + '\n', 'utf-8');
 
-    console.log("'scripts' directory has been created");
-    console.log('\nYou can now use the Ralph scripts in your workflow.');
-    console.log('Read scripts/ralph/ralph-usage-guide.md for more info.');
+    progress.stop("Created 'scripts' directory");
   } catch (err) {
+    progress.stop('Could not create Ralph workflow files');
     console.error('Error scaffolding files:', err);
     process.exit(1);
   }

@@ -5,7 +5,7 @@
  * Orchestration (GitHub setup, writeDevContainer) is handled by cli.js.
  */
 
-import { selectMenu } from '../lib/ui.js';
+import { select } from '../lib/ui.js';
 import { TEMPLATES } from '../lib/devcontainer-templates.js';
 
 /**
@@ -14,7 +14,10 @@ import { TEMPLATES } from '../lib/devcontainer-templates.js';
  * @returns {Promise<object>} The chosen template object.
  */
 export async function selectTemplate() {
-  console.log('\nSelect a Dev Container template (use arrow keys, Enter to confirm):\n');
-  const idx = await selectMenu(TEMPLATES.map(t => t.label));
-  return TEMPLATES[idx];
+  const name = await select('Choose a Dev Container', TEMPLATES.map(t => ({
+    value: t.name,
+    label: t.label,
+    hint: t.description,
+  })));
+  return TEMPLATES.find(t => t.name === name);
 }
