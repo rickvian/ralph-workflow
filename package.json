@@ -36,5 +36,8 @@
   },
   "devDependencies": {
     "vitest": "^4.1.4"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.0"
   }
 }
