@@ -115,7 +115,7 @@ export default function HowItWorksPage() {
             <rect x="14" y="34" width="158" height="255" rx="8"
               fill="#1f0f0f" stroke="#ff6b6b" strokeOpacity="0.25" strokeWidth="1" />
             <text x="93" y="56" textAnchor="middle" fill="#ff6b6b" fillOpacity="0.6"
-              fontSize="9.5" fontFamily="monospace" fontWeight="bold">HOST ONLY</text>
+              fontSize="9.5" fontFamily="monospace" fontWeight="bold">NOT MOUNTED BY DEFAULT</text>
             {[
               '🔑  SSH keys',
               '🐙  Full GitHub session',
@@ -128,11 +128,11 @@ export default function HowItWorksPage() {
             {/* blocked label */}
             <rect x="28" y="162" width="130" height="22" rx="4" fill="#ff6b6b" fillOpacity="0.12" />
             <text x="93" y="177" textAnchor="middle" fill="#ff6b6b" fillOpacity="0.7"
-              fontSize="9" fontFamily="monospace" fontWeight="bold">✗  NOT accessible in container</text>
+              fontSize="9" fontFamily="monospace" fontWeight="bold">✗  NOT mounted by this setup</text>
 
             {/* PAT mount arrow (only thing that flows into container) */}
             <text x="93" y="218" textAnchor="middle" fill="#4ade80" fillOpacity="0.7"
-              fontSize="9" fontFamily="monospace">Fine-grained PAT</text>
+              fontSize="9" fontFamily="monospace">Optional fine-grained PAT</text>
             <text x="93" y="232" textAnchor="middle" fill="#4ade80" fillOpacity="0.5"
               fontSize="8" fontFamily="monospace">(mount from host)</text>
             <line x1="173" y1="225" x2="188" y2="225"
@@ -173,20 +173,20 @@ export default function HowItWorksPage() {
             <text x="302" y="107" textAnchor="middle" fill="#b39aff" fillOpacity="0.55"
               fontSize="8.5" fontFamily="monospace">reads/writes/runs commands freely</text>
             <text x="302" y="122" textAnchor="middle" fill="#b39aff" fillOpacity="0.4"
-              fontSize="8" fontFamily="monospace">inside container only</text>
+              fontSize="8" fontFamily="monospace">inside the selected environment</text>
 
             {/* Accessible resources box */}
             <rect x="205" y="152" width="195" height="130" rx="8"
               fill="#0f2a0f" stroke="#4ade80" strokeOpacity="0.4" strokeWidth="1" />
             <text x="302" y="172" textAnchor="middle" fill="#4ade80" fillOpacity="0.75"
-              fontSize="9.5" fontFamily="monospace" fontWeight="bold">Accessible to Ralph</text>
+              fontSize="9.5" fontFamily="monospace" fontWeight="bold">Explicitly available to Ralph</text>
 
             {/* PAT item */}
             <rect x="218" y="180" width="169" height="38" rx="5" fill="#0a1f0a" />
             <text x="302" y="196" textAnchor="middle" fill="#4ade80" fillOpacity="0.8"
               fontSize="9" fontFamily="monospace" fontWeight="bold">Fine-grained PAT</text>
             <text x="302" y="210" textAnchor="middle" fill="#4ade80" fillOpacity="0.55"
-              fontSize="8.5" fontFamily="monospace">scope: 1 repo • Contents: write</text>
+              fontSize="8.5" fontFamily="monospace">chosen repo • review permissions</text>
 
             {/* Repo item */}
             <rect x="218" y="224" width="169" height="38" rx="5" fill="#0a1f0a" />
@@ -221,18 +221,16 @@ export default function HowItWorksPage() {
         <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm max-w-3xl mb-3">
           <span className="text-brand-purple font-bold flex-shrink-0">Fine-grained PAT</span>
           <span className="text-gray-400">
-            Even with full freedom inside the container, Ralph can only push to the single repository
-            the PAT is scoped to. Your host SSH keys, other GitHub repos, cloud accounts, and
-            org-wide access are never reachable.
+            A repository-scoped token limits GitHub access to the repository and permissions you configure.
+            It does not limit changes to the workspace or access to other resources you explicitly make available.
           </span>
         </div>
 
         <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm max-w-3xl mb-3">
           <span className="text-brand-purple font-bold flex-shrink-0">Blast radius limitation</span>
           <span className="text-gray-400">
-            Even if Ralph goes off-script, it can only push to the single repository
-            the PAT is scoped to. No access to other repos, cloud accounts, or host
-            SSH keys.
+            Credential cleanup reduces accidental forwarding from VS Code. Review your mounts, network access,
+            available tools, and credentials before starting an unattended run.
           </span>
         </div>
 
