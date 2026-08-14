@@ -4,8 +4,12 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Ralph Workflow',
-  description: 'Documentation for ralph-workflow',
+  title: {
+    default: 'Ralph Workflow',
+    template: '%s | Ralph Workflow',
+  },
+  description:
+    'Turn a prepared feature backlog into tested, reviewable commits with your AI coding CLI.',
 }
 
 export default function RootLayout({

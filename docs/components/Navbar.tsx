@@ -5,8 +5,10 @@ import { useState } from 'react'
 
 const navLinks = [
   { href: '/', label: 'Home' },
+  { href: '/is-ralph-right-for-me', label: 'Is Ralph for me?' },
   { href: '/usage-guide', label: 'Usage Guide' },
-  { href: '/how-it-works', label: 'How It Works' }
+  { href: '/how-it-works', label: 'How It Works' },
+  { href: '/safety-and-control', label: 'Safety & Control' },
 ]
 
 export default function Navbar() {

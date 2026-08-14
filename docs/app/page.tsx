@@ -1,151 +1,137 @@
 import Link from 'next/link'
 
-const features = [
+const proofArtifacts = [
+  'Starting commit and the complete PRD',
+  'Command and explicit iteration cap',
+  'Terminal record of the run and any retries',
+  'Commit history and final diff',
+  'Checks run for each completed story',
+  'Human review decisions before merge',
+]
+
+const loopSteps = [
   {
-    title: 'Scaffold ralph script fast',
-    description:
-      'Works with Claude, Codex, Gemini, and Opencode. Pick your AI CLI during setup; ralph.sh pipes the same prompt loop to whichever you choose.',
+    title: 'Prepare small stories',
+    description: 'Describe testable acceptance criteria in prd.yaml before the loop starts.',
   },
   {
-    title: 'Dev Container Templates',
-    description:
-      'Leveraging VSCode Dev container to provide isolation for ralph loop. Scaffolded templates pre-configure isolation, dependencies, and auto-install RTK with rtk init already run for your chosen CLI so token-reduction kicks in on first boot. For Claude, opt in to the Caveman debug plugin and the awesome-claude-code-subagents collection.',
+    title: 'Run the loop',
+    description: 'Ralph selects the next unfinished story, carries forward project context, and runs your AI CLI.',
   },
   {
-    title: 'Credential Isolation',
-    description:
-      'ralph-workflow provides convenience to passing github PAT token if ralph needs it, perform credential cleaning within container programmatically. GitHub setup is now independent from the Dev Container — pick either, both, or neither.',
-  },
-  {
-    title: 'Ralph Task Loop',
-    description:
-      'Define stories in prd.yaml, run ralph.sh, and watch the agent implement, test, commit, and mark each story done — all without you touching the keyboard.',
+    title: 'Review commits',
+    description: 'Inspect the tested changes and keep or reject them as you would any other submitted work.',
   },
 ]
 
 export default function Home() {
   return (
     <>
-      {/* Hero */}
       <section className="py-20 px-4 border-b border-white/10">
         <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 tracking-tight">
-            🔄 ralph-workflow
+          <p className="text-brand-purple text-sm font-semibold mb-4">AUTONOMOUS FEATURE EXECUTION FOR YOUR AI CLI</p>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-5 tracking-tight max-w-4xl mx-auto">
+            Ship a prepared feature backlog while you&apos;re away.
           </h1>
-          <p className="text-lg sm:text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            Scaffold everything you need to run Ralph safely inside a VS Code Dev Container
-            with isolated GitHub credentials and an autonomous AI coding loop.
+          <p className="text-lg sm:text-xl text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed">
+            Ralph Workflow drives Claude, Codex, Gemini, or OpenCode through small, testable stories—preserving
+            context, running checks, and creating reviewable commits. It is built for a bounded backlog, not a
+            replacement for engineering judgment.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/usage-guide"
+              href="/is-ralph-right-for-me"
               className="inline-block bg-brand-purple text-brand-bg font-semibold px-6 py-3 rounded hover:bg-brand-purple-light transition-colors"
             >
-              Get Started
+              Is Ralph right for me?
             </Link>
-            <a
-              href="https://github.com/rickvian/ralph-workflow"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/how-it-works"
               className="inline-block border border-white/20 text-gray-200 font-semibold px-6 py-3 rounded hover:border-brand-purple hover:text-brand-purple transition-colors"
             >
-              GitHub ↗
-            </a>
+              See the loop in action
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Features */}
       <section className="py-16 px-4 border-b border-white/10">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10">
-            Why ralph-workflow?
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            {features.map((f) => (
-              <div key={f.title} className="bg-white/5 rounded-lg border border-white/10 p-6">
-                <h3 className="text-lg font-semibold mb-2 text-brand-purple">{f.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{f.description}</p>
-              </div>
+          <div className="max-w-3xl mb-8">
+            <p className="text-brand-purple text-sm font-semibold mb-3">PROOF, NOT PROMISES</p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">Know what to inspect in a real Ralph run.</h2>
+            <p className="text-gray-400 leading-relaxed">
+              A credible autonomous run is reproducible and reviewable. Before relying on one, ask for these
+              artifacts—not a polished claim that an agent “built an app.”
+            </p>
+          </div>
+          <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-label="Proof artifacts">
+            {proofArtifacts.map((artifact) => (
+              <li key={artifact} className="border border-white/10 bg-white/5 rounded-lg p-4 text-sm text-gray-300 flex gap-3">
+                <span aria-hidden="true" className="text-brand-purple">✓</span>
+                <span>{artifact}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="py-16 px-4 border-b border-white/10">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10">A loop with clear checkpoints</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {loopSteps.map((step, index) => (
+              <article key={step.title} className="border border-white/10 bg-white/5 rounded-lg p-6">
+                <p className="font-mono text-brand-purple text-sm mb-4">0{index + 1}</p>
+                <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{step.description}</p>
+              </article>
             ))}
           </div>
-
-          <div className="flex justify-center mt-10">
-            <Link href="/how-it-works" className="text-brand-purple hover:underline">
-              More about how it works ➡️
-            </Link>
+          <div className="text-center mt-8">
+            <Link href="/how-it-works" className="text-brand-purple hover:underline">Explore the Ralph loop →</Link>
           </div>
         </div>
       </section>
 
-      {/* Quick Start */}
       <section className="py-16 px-4 border-b border-white/10">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
-            Quick Start
-          </h2>
-          <pre className="bg-black/40 border border-white/10 text-green-400 rounded-lg p-6 overflow-x-auto text-sm leading-relaxed">
-            <code>{`$ npx ralph-workflow
-
-? Which AI coding CLI? (claude/codex/gemini/opencode) claude
-? Set up VS Code Dev Container for isolation? (Y/n) Y
-? Set up GitHub repository with isolated PAT? (Y/n) Y
-? Install Caveman debugging plugin? (y/N) n
-? Install curated awesome-claude-code-subagents collection? (y/N) n
-? Choose a Dev Container template: Node 20
-  → Open https://github.com/settings/personal-access-tokens/new
-  → Select only this repository, grant Contents: write
-? Paste your PAT: **********************************
-
-✓ .devcontainer/devcontainer.json written
-✓ RTK + rtk init queued in postCreateCommand
-✓ scripts/ralph/ scaffolded
-✓ PAT stored at .ralph/token (gitignored, mode 0600)
-
-Reopen this folder in the Dev Container to start.`}</code>
-          </pre>
-          <p className="text-center mt-6 text-gray-400 text-sm">
-            Then edit <code className="bg-white/10 text-brand-purple px-1 rounded">scripts/ralph/prd.yaml</code>,
-            run{' '}
-            <code className="bg-white/10 text-brand-purple px-1 rounded">./scripts/ralph/ralph.sh 25</code>,
-            and let Ralph do the rest, safely in isolated environment{' '}
-            <Link href="/usage-guide" className="text-brand-purple hover:underline">
-              Full guide →
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-[1.25fr_1fr] gap-10 items-start">
+          <div>
+            <p className="text-brand-purple text-sm font-semibold mb-3">START WITH TASK FIT</p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ralph is not the right tool for every task.</h2>
+            <p className="text-gray-400 leading-relaxed mb-5">
+              Use an interactive session for a one-off change or unclear direction. Use Ralph when you have several
+              independently verifiable stories and want a resumable sequence of commits to review.
+            </p>
+            <Link href="/is-ralph-right-for-me" className="text-brand-purple hover:underline">
+              Compare Ralph with a one-shot session →
             </Link>
-          </p>
+          </div>
+          <aside className="border border-brand-purple/40 bg-brand-purple/10 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-3">Add isolation when you need it</h3>
+            <p className="text-gray-300 text-sm leading-relaxed mb-4">
+              Start locally to evaluate the loop. Add a Dev Container and a scoped GitHub token only when your
+              unattended run needs that access.
+            </p>
+            <Link href="/safety-and-control" className="text-brand-purple hover:underline text-sm">
+              Review safety and control options →
+            </Link>
+          </aside>
         </div>
       </section>
 
-      {/* Contributors */}
       <section className="py-16 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Contributors</h2>
-          <p className="text-gray-400 mb-8 max-w-xl mx-auto text-sm">
-            Built by the community. Every bug report, PR, and idea counts.
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to prepare a backlog?</h2>
+          <p className="text-gray-400 mb-7">
+            Start with a small, local run. Keep stories testable, cap iterations, and review every commit before merge.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 mb-10">
-            <a
-              href="https://rickvianaldi.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-4 py-2 hover:border-brand-purple transition-colors text-sm"
-            >
-              <img
-                src="https://github.com/rickvian.png"
-                alt="rickvian"
-                className="w-6 h-6 rounded-full"
-              />
-              <span className="text-gray-200">Rickvian Aldi</span>
-            </a>
-          </div>
-          <a
-            href="https://github.com/rickvian/ralph-workflow/blob/main/CONTRIBUTING.md"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/usage-guide"
             className="inline-block border border-brand-purple text-brand-purple font-semibold px-6 py-3 rounded hover:bg-brand-purple hover:text-brand-bg transition-colors"
           >
-            Become a contributor ↗
-          </a>
+            Read the setup guide →
+          </Link>
         </div>
       </section>
     </>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'How It Works — Ralph Workflow',
+  title: 'How It Works',
 }
 
 const steps = [
@@ -59,31 +59,37 @@ const steps = [
 export default function HowItWorksPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
-      <h1 className="text-3xl sm:text-4xl font-bold mb-6">How It Works</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold mb-6">How Ralph Workflow works</h1>
+
+      <section className="max-w-3xl mb-12">
+        <h2 className="text-xl font-semibold mb-4 text-brand-purple">The execution loop</h2>
+        <p className="text-gray-400 text-sm leading-relaxed mb-4">
+          Ralph is an iterative execution pattern for a prepared backlog. Each pass selects one unfinished story,
+          uses the project context you keep in <code className="bg-white/10 text-brand-purple px-1 rounded">progress.txt</code>,
+          asks your chosen AI CLI to implement it, and records the outcome as a commit.
+        </p>
+        <p className="text-gray-400 text-sm leading-relaxed">
+          The loop is most useful when stories are small, acceptance criteria are testable, and you plan to review the
+          resulting commits. It is not a substitute for deciding what to build or accepting unreviewed changes.
+        </p>
+      </section>
 
       <section className="mb-16">
-        <h2 className="text-xl font-semibold mb-4 text-brand-purple">Ralph workflow idea</h2>
+        <h2 className="text-xl font-semibold mb-4 text-brand-purple">Optional isolated execution</h2>
         <p className="text-gray-400 text-sm leading-relaxed mb-4">
-          Ralph runs with <code className="bg-white/10 text-brand-purple px-1 rounded">--dangerously-skip-permissions</code> (or similar),
-          which means it has full access to whatever credentials are available inside
-          the container. The Dev Container setup limits blast radius by:
+          Ralph may run with <code className="bg-white/10 text-brand-purple px-1 rounded">--dangerously-skip-permissions</code> (or similar),
+          so it can read, write, and run commands inside the environment you choose. A VS Code Dev Container is optional;
+          it reduces exposure to common host credentials during unattended runs.
         </p>
-
-
         <p className="text-gray-400 text-sm leading-relaxed mb-6">
-          The Dev Container acts as a hard boundary. VS Code credential-forwarding is neutralized by a
+          The generated container setup clears common VS Code credential-forwarding variables with a
           <code className="bg-white/10 text-brand-purple px-1 mx-1 rounded">postStart</code>
-          hook before Ralph runs. The only credential Ralph ever sees is a fine-grained PAT you mount
-          from your host — scoped to one repo.
+          hook before Ralph runs. This reduces credential blast radius; it does not make unreviewed code, available
+          workspace files, or allowed network access inherently safe.
         </p>
-
-        <p className="text-gray-400 text-sm leading-relaxed mb-6">
-          VSCode dev container is well integrated with VSCode IDE which makes it convenient to quickly reopens project in container anytime.
-        </p>
-
-
         <p className="text-gray-400 text-sm leading-relaxed mb-4">
-          <p>ralph-workflow provide convenience for you to scaffolds those things up</p>
+          If Ralph needs to push, you can provide a fine-grained token scoped to the repository you choose. Review the
+          requested permissions and the generated configuration before using remote access.
         </p>
         <div className="overflow-x-auto mb-2">
           <svg
@@ -109,7 +115,7 @@ export default function HowItWorksPage() {
             <rect x="14" y="34" width="158" height="255" rx="8"
               fill="#1f0f0f" stroke="#ff6b6b" strokeOpacity="0.25" strokeWidth="1" />
             <text x="93" y="56" textAnchor="middle" fill="#ff6b6b" fillOpacity="0.6"
-              fontSize="9.5" fontFamily="monospace" fontWeight="bold">HOST ONLY</text>
+              fontSize="9.5" fontFamily="monospace" fontWeight="bold">NOT MOUNTED BY DEFAULT</text>
             {[
               '🔑  SSH keys',
               '🐙  Full GitHub session',
@@ -122,11 +128,11 @@ export default function HowItWorksPage() {
             {/* blocked label */}
             <rect x="28" y="162" width="130" height="22" rx="4" fill="#ff6b6b" fillOpacity="0.12" />
             <text x="93" y="177" textAnchor="middle" fill="#ff6b6b" fillOpacity="0.7"
-              fontSize="9" fontFamily="monospace" fontWeight="bold">✗  NOT accessible in container</text>
+              fontSize="9" fontFamily="monospace" fontWeight="bold">✗  NOT mounted by this setup</text>
 
             {/* PAT mount arrow (only thing that flows into container) */}
             <text x="93" y="218" textAnchor="middle" fill="#4ade80" fillOpacity="0.7"
-              fontSize="9" fontFamily="monospace">Fine-grained PAT</text>
+              fontSize="9" fontFamily="monospace">Optional fine-grained PAT</text>
             <text x="93" y="232" textAnchor="middle" fill="#4ade80" fillOpacity="0.5"
               fontSize="8" fontFamily="monospace">(mount from host)</text>
             <line x1="173" y1="225" x2="188" y2="225"
@@ -167,20 +173,20 @@ export default function HowItWorksPage() {
             <text x="302" y="107" textAnchor="middle" fill="#b39aff" fillOpacity="0.55"
               fontSize="8.5" fontFamily="monospace">reads/writes/runs commands freely</text>
             <text x="302" y="122" textAnchor="middle" fill="#b39aff" fillOpacity="0.4"
-              fontSize="8" fontFamily="monospace">inside container only</text>
+              fontSize="8" fontFamily="monospace">inside the selected environment</text>
 
             {/* Accessible resources box */}
             <rect x="205" y="152" width="195" height="130" rx="8"
               fill="#0f2a0f" stroke="#4ade80" strokeOpacity="0.4" strokeWidth="1" />
             <text x="302" y="172" textAnchor="middle" fill="#4ade80" fillOpacity="0.75"
-              fontSize="9.5" fontFamily="monospace" fontWeight="bold">Accessible to Ralph</text>
+              fontSize="9.5" fontFamily="monospace" fontWeight="bold">Explicitly available to Ralph</text>
 
             {/* PAT item */}
             <rect x="218" y="180" width="169" height="38" rx="5" fill="#0a1f0a" />
             <text x="302" y="196" textAnchor="middle" fill="#4ade80" fillOpacity="0.8"
               fontSize="9" fontFamily="monospace" fontWeight="bold">Fine-grained PAT</text>
             <text x="302" y="210" textAnchor="middle" fill="#4ade80" fillOpacity="0.55"
-              fontSize="8.5" fontFamily="monospace">scope: 1 repo • Contents: write</text>
+              fontSize="8.5" fontFamily="monospace">chosen repo • review permissions</text>
 
             {/* Repo item */}
             <rect x="218" y="224" width="169" height="38" rx="5" fill="#0a1f0a" />
@@ -215,18 +221,16 @@ export default function HowItWorksPage() {
         <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm max-w-3xl mb-3">
           <span className="text-brand-purple font-bold flex-shrink-0">Fine-grained PAT</span>
           <span className="text-gray-400">
-            Even with full freedom inside the container, Ralph can only push to the single repository
-            the PAT is scoped to. Your host SSH keys, other GitHub repos, cloud accounts, and
-            org-wide access are never reachable.
+            A repository-scoped token limits GitHub access to the repository and permissions you configure.
+            It does not limit changes to the workspace or access to other resources you explicitly make available.
           </span>
         </div>
 
         <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm max-w-3xl mb-3">
           <span className="text-brand-purple font-bold flex-shrink-0">Blast radius limitation</span>
           <span className="text-gray-400">
-            Even if Ralph goes off-script, it can only push to the single repository
-            the PAT is scoped to. No access to other repos, cloud accounts, or host
-            SSH keys.
+            Credential cleanup reduces accidental forwarding from VS Code. Review your mounts, network access,
+            available tools, and credentials before starting an unattended run.
           </span>
         </div>
 
