@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'How It Works — Ralph Workflow',
+  title: 'How It Works',
 }
 
 const steps = [
@@ -59,31 +59,37 @@ const steps = [
 export default function HowItWorksPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
-      <h1 className="text-3xl sm:text-4xl font-bold mb-6">How It Works</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold mb-6">How Ralph Workflow works</h1>
+
+      <section className="max-w-3xl mb-12">
+        <h2 className="text-xl font-semibold mb-4 text-brand-purple">The execution loop</h2>
+        <p className="text-gray-400 text-sm leading-relaxed mb-4">
+          Ralph is an iterative execution pattern for a prepared backlog. Each pass selects one unfinished story,
+          uses the project context you keep in <code className="bg-white/10 text-brand-purple px-1 rounded">progress.txt</code>,
+          asks your chosen AI CLI to implement it, and records the outcome as a commit.
+        </p>
+        <p className="text-gray-400 text-sm leading-relaxed">
+          The loop is most useful when stories are small, acceptance criteria are testable, and you plan to review the
+          resulting commits. It is not a substitute for deciding what to build or accepting unreviewed changes.
+        </p>
+      </section>
 
       <section className="mb-16">
-        <h2 className="text-xl font-semibold mb-4 text-brand-purple">Ralph workflow idea</h2>
+        <h2 className="text-xl font-semibold mb-4 text-brand-purple">Optional isolated execution</h2>
         <p className="text-gray-400 text-sm leading-relaxed mb-4">
-          Ralph runs with <code className="bg-white/10 text-brand-purple px-1 rounded">--dangerously-skip-permissions</code> (or similar),
-          which means it has full access to whatever credentials are available inside
-          the container. The Dev Container setup limits blast radius by:
+          Ralph may run with <code className="bg-white/10 text-brand-purple px-1 rounded">--dangerously-skip-permissions</code> (or similar),
+          so it can read, write, and run commands inside the environment you choose. A VS Code Dev Container is optional;
+          it reduces exposure to common host credentials during unattended runs.
         </p>
-
-
         <p className="text-gray-400 text-sm leading-relaxed mb-6">
-          The Dev Container acts as a hard boundary. VS Code credential-forwarding is neutralized by a
+          The generated container setup clears common VS Code credential-forwarding variables with a
           <code className="bg-white/10 text-brand-purple px-1 mx-1 rounded">postStart</code>
-          hook before Ralph runs. The only credential Ralph ever sees is a fine-grained PAT you mount
-          from your host — scoped to one repo.
+          hook before Ralph runs. This reduces credential blast radius; it does not make unreviewed code, available
+          workspace files, or allowed network access inherently safe.
         </p>
-
-        <p className="text-gray-400 text-sm leading-relaxed mb-6">
-          VSCode dev container is well integrated with VSCode IDE which makes it convenient to quickly reopens project in container anytime.
-        </p>
-
-
         <p className="text-gray-400 text-sm leading-relaxed mb-4">
-          <p>ralph-workflow provide convenience for you to scaffolds those things up</p>
+          If Ralph needs to push, you can provide a fine-grained token scoped to the repository you choose. Review the
+          requested permissions and the generated configuration before using remote access.
         </p>
         <div className="overflow-x-auto mb-2">
           <svg
